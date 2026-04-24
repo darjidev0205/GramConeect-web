@@ -1,0 +1,91 @@
+import React, { useState, useContext } from 'react';
+import { motion } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
+import { Truck } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
+
+const RegisterPage = () => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState('user');
+  const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    // MOCK API CALL
+    const mockUser = { id: Math.random(), name, email, role };
+    const mockToken = "mock_jwt_token_register_12345";
+    
+    login(mockUser, mockToken);
+
+    if (mockUser.role === 'admin') navigate('/admin-dashboard');
+    else if (mockUser.role === 'agent') navigate('/agent-dashboard');
+    else navigate('/dashboard');
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-secondary/10 rounded-full blur-3xl -z-10"></div>
+      
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
+        <Link to="/" className="flex justify-center mb-8 gap-2 items-center font-bold text-2xl tracking-tight">
+          <span className="text-primary"><Truck className="w-8 h-8" /></span>
+          GramConnect.
+        </Link>
+
+        <Card className="w-full max-w-md shadow-2xl border-border/50 bg-card/60 backdrop-blur-xl">
+          <CardHeader className="space-y-2 text-center pb-8">
+            <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+            <CardDescription>Join the rural delivery revolution</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div className="space-y-2">
+                <Input 
+                  type="text" placeholder="Full Name" 
+                  value={name} onChange={(e) => setName(e.target.value)} required 
+                  className="h-12 bg-background/50 border-border/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Input 
+                  type="email" placeholder="Email" 
+                  value={email} onChange={(e) => setEmail(e.target.value)} required 
+                  className="h-12 bg-background/50 border-border/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Input 
+                  type="password" placeholder="Password" 
+                  value={password} onChange={(e) => setPassword(e.target.value)} required 
+                  className="h-12 bg-background/50 border-border/50"
+                />
+              </div>
+              <div className="space-y-2 pb-2">
+                <select 
+                  value={role} onChange={(e) => setRole(e.target.value)}
+                  className="w-full h-12 rounded-md border border-input bg-background/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="user">Villager / User</option>
+                  <option value="agent">Local Agent (Delivery Partner)</option>
+                  <option value="admin">Admin Manager</option>
+                </select>
+              </div>
+              <Button type="submit" className="w-full h-12 text-base rounded-lg shadow-lg hover:shadow-primary/25 transition-all">Sign Up</Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex justify-center text-sm text-muted-foreground pt-4 border-t border-border/50 mt-4">
+            Already have an account? <Link to="/login" className="ml-1 text-primary hover:underline font-medium">Sign in</Link>
+          </CardFooter>
+        </Card>
+      </motion.div>
+    </div>
+  );
+};
+
+export default RegisterPage;
