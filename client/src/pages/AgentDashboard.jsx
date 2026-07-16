@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { NotificationBell } from '../components/auth/NotificationBell';
 import { RoleSettings } from '../components/auth/RoleSettings';
+import { SupportCenter } from '../components/support/SupportCenter';
 import { io } from 'socket.io-client';
 
 const AgentDashboard = () => {
@@ -239,8 +240,12 @@ const AgentDashboard = () => {
 
             {/* User Profile Info */}
             <div className="flex items-center gap-3 pl-4 border-l border-white/10">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary/30 to-accent/30 border border-white/10 flex items-center justify-center font-bold text-primary">
-                {user?.name?.charAt(0) || 'A'}
+              <div className="w-9 h-9 rounded-full overflow-hidden border border-white/10 flex items-center justify-center font-bold text-primary bg-neutral-900 shrink-0">
+                {user?.profileImage ? (
+                  <img src={user.profileImage} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  user?.name?.charAt(0) || 'A'
+                )}
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold leading-none">{user?.name || 'Agent'}</p>
@@ -334,7 +339,12 @@ const AgentDashboard = () => {
             >
               <Settings className="w-4 h-4" /> Settings
             </button>
-            <button className="w-full py-3 px-4 rounded-xl text-sm font-medium text-muted-foreground hover:bg-white/5 hover:text-white flex items-center gap-3 transition-all"><HelpCircle className="w-4 h-4" /> Help Center</button>
+            <button 
+              onClick={() => setActiveTab('support')} 
+              className={`w-full py-3 px-4 rounded-xl text-sm font-medium flex items-center gap-3 transition-all ${activeTab === 'support' ? 'bg-primary text-black font-bold' : 'text-muted-foreground hover:bg-white/5 hover:text-white'}`}
+            >
+              <HelpCircle className="w-4 h-4" /> Help Center
+            </button>
           </div>
         </aside>
 
@@ -605,6 +615,11 @@ const AgentDashboard = () => {
           {/* TAB 5: SETTINGS */}
           {activeTab === 'settings' && (
             <RoleSettings />
+          )}
+
+          {/* TAB 6: SUPPORT CENTER */}
+          {activeTab === 'support' && (
+            <SupportCenter />
           )}
 
         </main>

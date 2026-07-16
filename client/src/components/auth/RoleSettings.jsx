@@ -3,20 +3,30 @@ import { Card, CardContent } from '../ui/card';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { AuthContext } from '../../context/AuthContext';
+import { AvatarUpload } from './AvatarUpload';
 import { 
   User, Truck, Shield, ShieldCheck, Mail, Phone, MapPin, Key, 
   Trash2, Bell, Globe, Moon, RefreshCw, AlertCircle, PlayCircle 
 } from 'lucide-react';
 
 export const RoleSettings = () => {
-  const { user, login, logout } = useContext(AuthContext);
+  const { user, setUser, logout } = useContext(AuthContext);
 
-  // General profile state
+  // General profile states
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
+  const [avatar, setAvatar] = useState(user?.profileImage || '');
   const [address, setAddress] = useState(user?.location?.address || '');
+  const [village, setVillage] = useState(user?.location?.landmark || '');
   const [password, setPassword] = useState('');
+
+  // Preference states
+  const [emergencyContact, setEmergencyContact] = useState(user?.settings?.emergencyContact || '');
+  const [language, setLanguage] = useState(user?.settings?.language || 'en');
+  const [theme, setTheme] = useState(user?.settings?.theme || 'dark');
+  const [pushNotif, setPushNotif] = useState(user?.settings?.notificationPreferences?.push !== false);
+  const [emailNotif, setEmailNotif] = useState(user?.settings?.notificationPreferences?.email !== false);
 
   // Agent vehicle state
   const [vehicleType, setVehicleType] = useState(user?.vehicle?.type || 'motorcycle');
@@ -39,6 +49,29 @@ export const RoleSettings = () => {
     if (user?.role === 'admin') {
       fetchUsers();
       fetchAuditLogs();
+    }
+  }, [user]);
+
+  // Sync state if user changes from another tab profile sync
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setEmail(user.email || '');
+      setPhone(user.phone || '');
+      setAvatar(user.profileImage || '');
+      setAddress(user.location?.address || '');
+      setVillage(user.location?.landmark || '');
+      setEmergencyContact(user.settings?.emergencyContact || '');
+      setLanguage(user.settings?.language || 'en');
+      setTheme(user.settings?.theme || 'dark');
+      setPushNotif(user.settings?.notificationPreferences?.push !== false);
+      setEmailNotif(user.settings?.notificationPreferences?.email !== false);
+      if (user.role === 'agent') {
+        setVehicleType(user.vehicle?.type || 'motorcycle');
+        setVehicleNumber(user.vehicle?.number || '');
+        setLicenseNumber(user.vehicle?.licenseNumber || '');
+        setAvailability(user.availability !== false);
+      }
     }
   }, [user]);
 
@@ -86,7 +119,7 @@ export const RoleSettings = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/auth/profile', {
+      const response = await fetch('http://localhost:5000/api/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -96,8 +129,17 @@ export const RoleSettings = () => {
           name,
           email,
           phone,
+          avatar,
           address,
+          village,
           password: password || undefined,
+          emergencyContact,
+          language,
+          theme,
+          notificationPreferences: {
+            push: pushNotif,
+            email: emailNotif
+          },
           vehicle: user?.role === 'agent' ? {
             type: vehicleType,
             number: vehicleNumber,
@@ -110,8 +152,8 @@ export const RoleSettings = () => {
       if (!response.ok) throw new Error(data.message || 'Failed to update profile');
 
       // Update AuthContext session state
-      login(data.user, token, localStorage.getItem('refreshToken'));
-      setSuccessMsg('Profile updated successfully.');
+      setUser(data);
+      setSuccessMsg('Profile and preferences updated successfully.');
       setPassword('');
     } catch (err) {
       setErrorMsg(err.message || 'Error updating settings');
@@ -177,22 +219,76 @@ export const RoleSettings = () => {
 
   const renderVillagerSettings = () => (
     <form onSubmit={handleUpdateProfile} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground">Full Name</label>
-          <Input value={name} onChange={e => setName(e.target.value)} required className="bg-neutral-900 border-white/5 h-11 text-xs" />
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-8 border-b border-white/5 pb-6">
+        <AvatarUpload 
+          currentImage={avatar} 
+          onUploadSuccess={(url) => setAvatar(url)} 
+          onRemoveSuccess={() => setAvatar('')} 
+        />
+        <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground">Full Name</label>
+            <Input value={name} onChange={e => setName(e.target.value)} required className="bg-neutral-950 border-white/5 h-11 text-xs" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground">Email Address</label>
+            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="bg-neutral-950 border-white/5 h-11 text-xs" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground">Phone Number</label>
+            <Input value={phone} onChange={e => setPhone(e.target.value)} className="bg-neutral-950 border-white/5 h-11 text-xs" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground">Village Name / Landmark</label>
+            <Input value={village} onChange={e => setVillage(e.target.value)} placeholder="e.g. Near Panchayat Circle" className="bg-neutral-950 border-white/5 h-11 text-xs" />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-xs font-semibold text-muted-foreground">Village Complete Address</label>
+            <Input value={address} onChange={e => setAddress(e.target.value)} className="bg-neutral-950 border-white/5 h-11 text-xs" />
+          </div>
         </div>
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground">Email Address</label>
-          <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="bg-neutral-900 border-white/5 h-11 text-xs" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div className="space-y-4">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2"><Bell className="w-4 h-4 text-primary" /> Preferences</h3>
+          <div className="space-y-3 bg-black/20 p-4 rounded-2xl border border-white/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold">Push Notifications</p>
+                <p className="text-[10px] text-muted-foreground">Logistics updates, active tracking alerts</p>
+              </div>
+              <input type="checkbox" checked={pushNotif} onChange={e => setPushNotif(e.target.checked)} className="rounded bg-neutral-950 w-4 h-4 text-primary border-white/10" />
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-white/5">
+              <div>
+                <p className="text-xs font-bold">Email Notifications</p>
+                <p className="text-[10px] text-muted-foreground">Receives OTP codes and delivery reports</p>
+              </div>
+              <input type="checkbox" checked={emailNotif} onChange={e => setEmailNotif(e.target.checked)} className="rounded bg-neutral-950 w-4 h-4 text-primary border-white/10" />
+            </div>
+          </div>
         </div>
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground">Phone Number</label>
-          <Input value={phone} onChange={e => setPhone(e.target.value)} className="bg-neutral-900 border-white/5 h-11 text-xs" />
-        </div>
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground">Village Address</label>
-          <Input value={address} onChange={e => setAddress(e.target.value)} className="bg-neutral-900 border-white/5 h-11 text-xs" />
+
+        <div className="space-y-4">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2"><Globe className="w-4 h-4 text-primary" /> Language & Theme</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xxs font-semibold text-muted-foreground">Interface Language</label>
+              <select value={language} onChange={e => setLanguage(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl px-3 py-2.5 text-xs text-white">
+                <option value="en">English (US)</option>
+                <option value="gu">ગુજરાતી (Gujarati)</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xxs font-semibold text-muted-foreground">Workspace Theme</label>
+              <select value={theme} onChange={e => setTheme(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl px-3 py-2.5 text-xs text-white">
+                <option value="dark">Charcoal Dark (SaaS)</option>
+                <option value="light">Vanilla Light</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -200,16 +296,16 @@ export const RoleSettings = () => {
         <h3 className="text-sm font-bold text-white flex items-center gap-2"><Key className="w-4 h-4 text-primary" /> Security & Credentials</h3>
         <div className="space-y-2 max-w-sm">
           <label className="text-xs font-semibold text-muted-foreground">Change Password (leave blank to keep current)</label>
-          <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="bg-neutral-900 border-white/5 h-11 text-xs" />
+          <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="bg-neutral-950 border-white/5 h-11 text-xs" />
         </div>
       </div>
 
       <div className="border-t border-white/5 pt-6 flex justify-between items-center flex-wrap gap-4">
-        <Button type="submit" disabled={isSaving} className="bg-primary text-black font-bold h-11 px-8 rounded-xl">
+        <Button type="submit" disabled={isSaving} className="bg-primary text-black font-bold h-11 px-8 rounded-xl cursor-pointer">
           {isSaving ? 'Saving Changes...' : 'Save Settings'}
         </Button>
 
-        <Button type="button" onClick={handleDeleteAccount} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold border border-red-500/20 h-11 px-6 rounded-xl text-xs transition-all">
+        <Button type="button" onClick={handleDeleteAccount} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold border border-red-500/20 h-11 px-6 rounded-xl text-xs transition-all cursor-pointer">
           <Trash2 className="w-4 h-4 mr-2" /> Delete Account
         </Button>
       </div>
@@ -227,26 +323,33 @@ export const RoleSettings = () => {
           type="checkbox" 
           checked={availability}
           onChange={e => handleToggleAvailability(e.target.checked)}
-          className="rounded border-white/20 bg-neutral-900 text-primary w-5 h-5 cursor-pointer"
+          className="rounded border-white/20 bg-neutral-950 text-primary w-5 h-5 cursor-pointer"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground">Full Name</label>
-          <Input value={name} onChange={e => setName(e.target.value)} required className="bg-neutral-900 border-white/5 h-11 text-xs" />
-        </div>
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground">Email Address</label>
-          <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="bg-neutral-900 border-white/5 h-11 text-xs" />
-        </div>
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground">Phone Number</label>
-          <Input value={phone} onChange={e => setPhone(e.target.value)} className="bg-neutral-900 border-white/5 h-11 text-xs" />
-        </div>
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground">Operating Zone Address</label>
-          <Input value={address} onChange={e => setAddress(e.target.value)} className="bg-neutral-900 border-white/5 h-11 text-xs" />
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-8 border-b border-white/5 pb-6">
+        <AvatarUpload 
+          currentImage={avatar} 
+          onUploadSuccess={(url) => setAvatar(url)} 
+          onRemoveSuccess={() => setAvatar('')} 
+        />
+        <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground">Full Name</label>
+            <Input value={name} onChange={e => setName(e.target.value)} required className="bg-neutral-950 border-white/5 h-11 text-xs" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground">Email Address</label>
+            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="bg-neutral-950 border-white/5 h-11 text-xs" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground">Phone Number</label>
+            <Input value={phone} onChange={e => setPhone(e.target.value)} className="bg-neutral-950 border-white/5 h-11 text-xs" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground">Operating Zone / Hub</label>
+            <Input value={address} onChange={e => setAddress(e.target.value)} className="bg-neutral-950 border-white/5 h-11 text-xs" />
+          </div>
         </div>
       </div>
 
@@ -258,7 +361,7 @@ export const RoleSettings = () => {
             <select 
               value={vehicleType} 
               onChange={e => setVehicleType(e.target.value)}
-              className="w-full bg-neutral-900 border border-white/5 rounded-xl px-3 py-3 text-xs outline-none text-white cursor-pointer"
+              className="w-full bg-neutral-950 border border-white/5 rounded-xl px-3 py-3 text-xs outline-none text-white cursor-pointer"
             >
               <option value="bicycle">Bicycle</option>
               <option value="motorcycle">Motorcycle</option>
@@ -268,12 +371,27 @@ export const RoleSettings = () => {
           </div>
           <div className="space-y-2">
             <label className="text-xs font-semibold text-muted-foreground">Vehicle Number Plate</label>
-            <Input value={vehicleNumber} onChange={e => setVehicleNumber(e.target.value)} placeholder="e.g. GJ-01-XX-9999" className="bg-neutral-900 border-white/5 h-11 text-xs" />
+            <Input value={vehicleNumber} onChange={e => setVehicleNumber(e.target.value)} placeholder="e.g. GJ-01-XX-9999" className="bg-neutral-950 border-white/5 h-11 text-xs" />
           </div>
           <div className="space-y-2">
             <label className="text-xs font-semibold text-muted-foreground">Driving License Number</label>
-            <Input value={licenseNumber} onChange={e => setLicenseNumber(e.target.value)} placeholder="e.g. DL-XXXXXXXXXXXX" className="bg-neutral-900 border-white/5 h-11 text-xs" />
+            <Input value={licenseNumber} onChange={e => setLicenseNumber(e.target.value)} placeholder="e.g. DL-XXXXXXXXXXXX" className="bg-neutral-950 border-white/5 h-11 text-xs" />
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-muted-foreground">Emergency Contact Name & Phone</label>
+          <Input value={emergencyContact} onChange={e => setEmergencyContact(e.target.value)} placeholder="e.g. Ramesh Patel (+91 99000 00000)" className="bg-neutral-950 border-white/5 h-11 text-xs" />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-muted-foreground">Interface Language</label>
+          <select value={language} onChange={e => setLanguage(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl px-3 py-3 text-xs text-white">
+            <option value="en">English (US)</option>
+            <option value="gu">ગુજરાતી (Gujarati)</option>
+            <option value="hi">हिन्दी (Hindi)</option>
+          </select>
         </div>
       </div>
 
@@ -281,12 +399,12 @@ export const RoleSettings = () => {
         <h3 className="text-sm font-bold text-white flex items-center gap-2"><Key className="w-4 h-4 text-primary" /> Security & Credentials</h3>
         <div className="space-y-2 max-w-sm">
           <label className="text-xs font-semibold text-muted-foreground">Change Password (leave blank to keep current)</label>
-          <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="bg-neutral-900 border-white/5 h-11 text-xs" />
+          <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="bg-neutral-950 border-white/5 h-11 text-xs" />
         </div>
       </div>
 
       <div className="border-t border-white/5 pt-6 text-left">
-        <Button type="submit" disabled={isSaving} className="bg-primary text-black font-bold h-11 px-8 rounded-xl">
+        <Button type="submit" disabled={isSaving} className="bg-primary text-black font-bold h-11 px-8 rounded-xl cursor-pointer">
           {isSaving ? 'Saving Changes...' : 'Save Settings'}
         </Button>
       </div>
@@ -297,19 +415,26 @@ export const RoleSettings = () => {
     <div className="space-y-8">
       {/* 1. Profile parameters updates */}
       <form onSubmit={handleUpdateProfile} className="space-y-6">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider text-xxs">Admin Profile settings</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-muted-foreground">Full Name</label>
-            <Input value={name} onChange={e => setName(e.target.value)} required className="bg-neutral-900 border-white/5 h-11 text-xs" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-muted-foreground">Email Address</label>
-            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="bg-neutral-900 border-white/5 h-11 text-xs" />
+        <h3 className="text-sm font-bold text-white uppercase tracking-wider text-[10px] tracking-widest">Admin Profile settings</h3>
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-8 border-b border-white/5 pb-6">
+          <AvatarUpload 
+            currentImage={avatar} 
+            onUploadSuccess={(url) => setAvatar(url)} 
+            onRemoveSuccess={() => setAvatar('')} 
+          />
+          <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Full Name</label>
+              <Input value={name} onChange={e => setName(e.target.value)} required className="bg-neutral-950 border-white/5 h-11 text-xs" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Email Address</label>
+              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="bg-neutral-950 border-white/5 h-11 text-xs" />
+            </div>
           </div>
         </div>
         <div className="flex gap-4">
-          <Button type="submit" disabled={isSaving} className="bg-primary text-black font-bold h-11 px-8 rounded-xl">
+          <Button type="submit" disabled={isSaving} className="bg-primary text-black font-bold h-11 px-8 rounded-xl cursor-pointer">
             {isSaving ? 'Saving Profile...' : 'Save Admin Profile'}
           </Button>
         </div>
@@ -328,10 +453,16 @@ export const RoleSettings = () => {
             {usersList.map(u => (
               <div key={u._id} className="p-3 flex items-center justify-between hover:bg-white/2 text-xs">
                 <div className="space-y-0.5">
-                  <p className="font-bold text-white flex items-center gap-1.5">{u.name} <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-muted-foreground capitalize">{u.role}</span></p>
+                  <p className="font-bold text-white flex items-center gap-1.5">
+                    {u.profileImage && (
+                      <img src={u.profileImage} alt="" className="w-5 h-5 rounded-full object-cover inline-block mr-1.5" />
+                    )}
+                    {u.name} 
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-muted-foreground capitalize">{u.role}</span>
+                  </p>
                   <p className="text-xxs text-muted-foreground">{u.email} | {u.phone || 'No phone'}</p>
                 </div>
-                {u._id !== user.id && u._id !== user.userId && (
+                {u._id !== user._id && u._id !== user.id && u._id !== user.userId && (
                   <button onClick={() => handleAdminDeleteUser(u._id)} className="p-2 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/15 cursor-pointer">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
