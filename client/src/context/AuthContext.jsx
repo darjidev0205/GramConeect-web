@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 
 export const AuthContext = createContext();
 
@@ -6,30 +7,129 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+  const refreshSession = async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) return null;
 
-    if (token && userData) {
-      setUser(JSON.parse(userData));
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      });
+      if (!response.ok) throw new Error('Refresh revoked');
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      return data.token;
+    } catch (err) {
+      console.error('Session refresh failed:', err);
+      logout();
+      return null;
     }
-    setLoading(false);
+  };
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('token');
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (token) {
+        try {
+          const response = await fetch('http://localhost:5000/api/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+          } else {
+            // Access token expired, try to refresh
+            const newToken = await refreshSession();
+            if (newToken) {
+              const retryResponse = await fetch('http://localhost:5000/api/profile', {
+                headers: { 'Authorization': `Bearer ${newToken}` }
+              });
+              if (retryResponse.ok) {
+                const userData = await retryResponse.json();
+                setUser(userData);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Initial profile fetch failed:', err);
+        }
+      } else if (refreshToken) {
+        // Attempt to auto-refresh session if access token is missing but refresh token exists
+        const newToken = await refreshSession();
+        if (newToken) {
+          try {
+            const response = await fetch('http://localhost:5000/api/profile', {
+              headers: { 'Authorization': `Bearer ${newToken}` }
+            });
+            if (response.ok) {
+              const userData = await response.json();
+              setUser(userData);
+            }
+          } catch (err) {
+            console.error('Error fetching profile after refresh:', err);
+          }
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
-  const login = (userData, token) => {
+  // Listen to Socket.io updates for Profile Sync
+  useEffect(() => {
+    if (!user) return;
+    const socket = io('http://localhost:5000');
+
+    socket.on('connect', () => {
+      socket.emit('join_user', user._id || user.id);
+    });
+
+    socket.on('new_notification', (data) => {
+      if (data && data.type === 'profile_sync') {
+        setUser(data.user);
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user?._id || user?.id]);
+
+  const login = (userData, token, refreshToken) => {
     localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    }
+    // NEVER save user object to localStorage! MongoDB is the single source of truth.
     setUser(userData);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      try {
+        await fetch('http://localhost:5000/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken })
+        });
+      } catch (err) {
+        console.error('Server logout failed:', err);
+      }
+    }
     localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('refreshToken');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, refreshSession, setUser }}>
       {children}
     </AuthContext.Provider>
   );

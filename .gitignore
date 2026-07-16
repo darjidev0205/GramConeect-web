@@ -1,0 +1,26 @@
+# Dependency Directories
+node_modules/
+**/node_modules/
+
+# Local Environment Variables
+.env
+**/.env
+.env.local
+.env.*.local
+
+# Production Builds
+dist/
+**/dist/
+build/
+**/build/
+
+# Local File Uploads
+uploads/
+**/uploads/
+
+# IDE and System Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.gemini/
