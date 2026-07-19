@@ -3,10 +3,12 @@ const User = require('../models/User');
 const jwtService = require('../services/jwt.service');
 
 const register = async (req, res) => {
+  console.log('Incoming Register Request Body:', JSON.stringify(req.body, null, 2));
   const { name, email, phone, password, role, location, vehicle, profileImage, termsAccepted } = req.body;
 
   // 1. Basic validation
   if (!name || !email || !role || !termsAccepted) {
+    console.log('Register Validation Failed: missing required fields');
     return res.status(400).json({ message: 'Name, email, role, and terms acceptance are required.' });
   }
 
@@ -33,12 +35,14 @@ const register = async (req, res) => {
     // 3. Prevent duplicate accounts
     const existingEmail = await User.findOne({ email: email.toLowerCase() });
     if (existingEmail) {
+      console.log(`Register Failed: Email ${email} already exists`);
       return res.status(400).json({ message: 'An account with this email address already exists.' });
     }
 
     if (phone) {
       const existingPhone = await User.findOne({ phone });
       if (existingPhone) {
+        console.log(`Register Failed: Phone ${phone} already exists`);
         return res.status(400).json({ message: 'An account with this phone number already exists.' });
       }
     }

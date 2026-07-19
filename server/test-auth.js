@@ -1,3 +1,4 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
 const Otp = require('./models/Otp');
@@ -8,7 +9,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const runTests = async () => {
   console.log('Connecting to MongoDB for testing...');
-  await mongoose.connect('mongodb://localhost:27017/gramconnect');
+  await mongoose.connect(process.env.MONGODB_URI);
   console.log('Connected.');
 
   // Clean up previous test runs

@@ -18,6 +18,8 @@ const getTransporter = async () => {
       },
     });
 
+    transporterInstance.defaultSender = process.env.SMTP_USER;
+
     try {
       await transporterInstance.verify();
       console.log("✅ SMTP Connected Successfully");
@@ -44,6 +46,8 @@ const getTransporter = async () => {
     },
   });
 
+  transporterInstance.defaultSender = testAccount.user;
+
   return transporterInstance;
 };
 
@@ -54,7 +58,7 @@ const sendOtpEmail = async (to, otp) => {
     const info = await transporter.sendMail({
       from:
         process.env.EMAIL_FROM ||
-        `"GramConnect" <${process.env.SMTP_USER}>`,
+        `"GramConnect" <${transporter.defaultSender || process.env.SMTP_USER}>`,
 
       to,
 

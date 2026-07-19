@@ -375,6 +375,8 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
         };
       }
 
+      console.log('Registration Payload:', JSON.stringify(payload, null, 2));
+
       const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
