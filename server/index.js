@@ -1,9 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
 const socketService = require('./services/socket.service');
-require('dotenv').config();
+const path = require('path');
 
 const authRoutes = require('./routes/auth.routes');
 const otpRoutes = require('./routes/otp.routes');
@@ -12,7 +13,6 @@ const orderRoutes = require('./routes/orders');
 const notificationRoutes = require('./routes/notifications');
 const profileRoutes = require('./routes/profile');
 const ticketRoutes = require('./routes/tickets');
-const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -51,11 +51,9 @@ app.use(
   })
 );
 
-// Handle preflight requests for all routes
-app.options("*", cors());
-
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const Hub = require('./models/Hub');
 
@@ -89,14 +87,14 @@ mongoose.connect(process.env.MONGODB_URI)
 app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'GramConnect backend is running'
+    message: "GramConnect backend running"
   });
 });
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'GramConnect API is healthy'
+    message: "API healthy"
   });
 });
 
@@ -111,6 +109,14 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.originalUrl}`
+  });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
