@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Check, Trash2, CheckCircle2, Info, AlertTriangle, Volume2 } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import { io } from 'socket.io-client';
+import API_BASE_URL from '../../config/api';
 
 export const NotificationBell = () => {
   const { user } = useContext(AuthContext);
@@ -40,7 +41,7 @@ export const NotificationBell = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const response = await fetch('http://localhost:5000/api/notifications', {
+      const response = await fetch(`${API_BASE_URL}/api/notifications`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -56,7 +57,7 @@ export const NotificationBell = () => {
     fetchNotifications();
 
     // Setup Socket.io client
-    const socket = io('http://localhost:5000');
+    const socket = io(API_BASE_URL);
     socketRef.current = socket;
 
     socket.on('connect', () => {
@@ -91,7 +92,7 @@ export const NotificationBell = () => {
   const handleMarkAsRead = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+      const response = await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -108,7 +109,7 @@ export const NotificationBell = () => {
   const handleMarkAllRead = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/notifications/read-all', {
+      const response = await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -124,7 +125,7 @@ export const NotificationBell = () => {
     e.stopPropagation();
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/notifications/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/notifications/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

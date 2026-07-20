@@ -6,6 +6,7 @@ import { Button } from '../ui/button';
 import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { RoleSelector } from './RoleSelector';
+import API_BASE_URL from '../../config/api';
 
 const steps = {
   METHOD: 'METHOD',
@@ -191,7 +192,7 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/otp/send', {
+      const response = await fetch(`${API_BASE_URL}/api/otp/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ target, type: authMethod })
@@ -228,7 +229,7 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
     setSuccess('');
     try {
       const target = getTarget();
-      const response = await fetch('http://localhost:5000/api/otp/send', {
+      const response = await fetch(`${API_BASE_URL}/api/otp/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ target, type: authMethod })
@@ -267,7 +268,7 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/otp/verify', {
+      const response = await fetch(`${API_BASE_URL}/api/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ target, otp, role })
@@ -377,7 +378,7 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
 
       console.log('Registration Payload:', JSON.stringify(payload, null, 2));
 
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

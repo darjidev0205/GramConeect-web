@@ -14,6 +14,7 @@ import { NotificationBell } from '../components/auth/NotificationBell';
 import { RoleSettings } from '../components/auth/RoleSettings';
 import { SupportCenter } from '../components/support/SupportCenter';
 import { io } from 'socket.io-client';
+import API_BASE_URL from '../config/api';
 
 const UserDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -149,7 +150,7 @@ const UserDashboard = () => {
 
   // Listen to Socket.io updates for real-time logistics sync
   useEffect(() => {
-    const socket = io('http://localhost:5000');
+    const socket = io(API_BASE_URL);
     socket.on('connect', () => {
       if (user?.id || user?.userId) {
         socket.emit('join_user', user.id || user.userId);
@@ -184,7 +185,7 @@ const UserDashboard = () => {
   const fetchHubs = async () => {
     setLoadingHubs(true);
     try {
-      const response = await fetch('http://localhost:5000/api/hubs');
+      const response = await fetch(`${API_BASE_URL}/api/hubs`);
       if (!response.ok) throw new Error('Failed to fetch hubs');
       const data = await response.json();
       setHubs(data);
@@ -200,7 +201,7 @@ const UserDashboard = () => {
     setLoadingOrders(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${API_BASE_URL}/api/orders`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -309,7 +310,7 @@ const UserDashboard = () => {
     setPlacingOrder(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${API_BASE_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -352,7 +353,7 @@ const UserDashboard = () => {
     setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

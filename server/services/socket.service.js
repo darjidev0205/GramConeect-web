@@ -2,10 +2,22 @@ const socketIo = require('socket.io');
 let ioInstance = null;
 
 const init = (server) => {
+  const allowedOrigins = [
+    "http://localhost:5173",
+    process.env.FRONTEND_URL
+  ].filter(Boolean);
+
   ioInstance = socketIo(server, {
     cors: {
-      origin: '*',
-      methods: ['GET', 'POST', 'PUT', 'DELETE']
+      origin(origin, callback) {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+          return callback(null, true);
+        }
+        return callback(new Error(`Socket.io CORS blocked origin: ${origin}`));
+      },
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      credentials: true
     }
   });
 

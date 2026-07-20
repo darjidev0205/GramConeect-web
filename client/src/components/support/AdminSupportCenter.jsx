@@ -6,6 +6,7 @@ import {
   Search, MessageSquare, AlertCircle, RefreshCw, X, Send, 
   Paperclip, CheckCircle2, ChevronRight, ShieldCheck, UserCheck, Trash2 
 } from 'lucide-react';
+import API_BASE_URL from '../../config/api';
 
 export const AdminSupportCenter = () => {
   const [tickets, setTickets] = useState([]);
@@ -39,7 +40,7 @@ export const AdminSupportCenter = () => {
       if (categoryFilter) params.append('category', categoryFilter);
       if (search) params.append('search', search);
 
-      const response = await fetch(`http://localhost:5000/api/tickets?${params.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/api/tickets?${params.toString()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -66,7 +67,7 @@ export const AdminSupportCenter = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tickets/${selectedTicket._id}/replies`, {
+      const response = await fetch(`${API_BASE_URL}/api/tickets/${selectedTicket._id}/replies`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -89,7 +90,7 @@ export const AdminSupportCenter = () => {
   const handleStatusChange = async (ticketId, status) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tickets/${ticketId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +114,7 @@ export const AdminSupportCenter = () => {
   const handleAssignToMe = async (ticketId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tickets/${ticketId}/assign`, {
+      const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}/assign`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +126,7 @@ export const AdminSupportCenter = () => {
       if (response.ok) {
         fetchTickets();
         // Reload details
-        const detailsRes = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
+        const detailsRes = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (detailsRes.ok) {
@@ -142,7 +143,7 @@ export const AdminSupportCenter = () => {
     if (!window.confirm('WARNING: Delete this support ticket permanently?')) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

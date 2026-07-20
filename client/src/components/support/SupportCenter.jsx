@@ -6,6 +6,7 @@ import {
   Plus, MessageSquare, AlertCircle, Clock, CheckCircle2, ChevronRight, 
   Send, Paperclip, Star, RefreshCw, X, FileText, CornerDownRight 
 } from 'lucide-react';
+import API_BASE_URL from '../../config/api';
 
 export const SupportCenter = () => {
   const [tickets, setTickets] = useState([]);
@@ -37,7 +38,7 @@ export const SupportCenter = () => {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/tickets', {
+      const response = await fetch(`${API_BASE_URL}/api/tickets`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -71,7 +72,7 @@ export const SupportCenter = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/tickets', {
+      const response = await fetch(`${API_BASE_URL}/api/tickets`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -107,7 +108,7 @@ export const SupportCenter = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tickets/${selectedTicket._id}/replies`, {
+      const response = await fetch(`${API_BASE_URL}/api/tickets/${selectedTicket._id}/replies`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -131,7 +132,7 @@ export const SupportCenter = () => {
     if (!window.confirm('Close this ticket?')) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tickets/${ticketId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +156,7 @@ export const SupportCenter = () => {
   const handleRateResolution = async (ticketId, rating) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tickets/${ticketId}/rate`, {
+      const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}/rate`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

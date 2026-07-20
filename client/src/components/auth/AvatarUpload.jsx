@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Camera, Trash2, Loader2, Image as ImageIcon } from 'lucide-react';
 import { Button } from '../ui/button';
+import API_BASE_URL from '../../config/api';
 
 export const AvatarUpload = ({ currentImage, onUploadSuccess, onRemoveSuccess }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -35,7 +36,7 @@ export const AvatarUpload = ({ currentImage, onUploadSuccess, onRemoveSuccess })
       const token = localStorage.getItem('token');
       setUploadProgress(50);
       
-      const response = await fetch('http://localhost:5000/api/profile/upload', {
+      const response = await fetch(`${API_BASE_URL}/api/profile/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -68,7 +69,7 @@ export const AvatarUpload = ({ currentImage, onUploadSuccess, onRemoveSuccess })
     setIsUploading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/profile/avatar', {
+      const response = await fetch(`${API_BASE_URL}/api/profile/avatar`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Truck } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { RoleSelector } from '../components/auth/RoleSelector';
+import API_BASE_URL from '../config/api';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -40,7 +41,7 @@ const RegisterPage = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

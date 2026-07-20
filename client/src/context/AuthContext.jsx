@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import API_BASE_URL from '../config/api';
 
 export const AuthContext = createContext();
 
@@ -12,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     if (!refreshToken) return null;
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/refresh', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken })
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }) => {
 
       if (token) {
         try {
-          const response = await fetch('http://localhost:5000/api/profile', {
+          const response = await fetch(`${API_BASE_URL}/api/profile`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (response.ok) {
@@ -46,7 +47,7 @@ export const AuthProvider = ({ children }) => {
             // Access token expired, try to refresh
             const newToken = await refreshSession();
             if (newToken) {
-              const retryResponse = await fetch('http://localhost:5000/api/profile', {
+              const retryResponse = await fetch(`${API_BASE_URL}/api/profile`, {
                 headers: { 'Authorization': `Bearer ${newToken}` }
               });
               if (retryResponse.ok) {
@@ -63,7 +64,7 @@ export const AuthProvider = ({ children }) => {
         const newToken = await refreshSession();
         if (newToken) {
           try {
-            const response = await fetch('http://localhost:5000/api/profile', {
+            const response = await fetch(`${API_BASE_URL}/api/profile`, {
               headers: { 'Authorization': `Bearer ${newToken}` }
             });
             if (response.ok) {
@@ -84,7 +85,7 @@ export const AuthProvider = ({ children }) => {
   // Listen to Socket.io updates for Profile Sync
   useEffect(() => {
     if (!user) return;
-    const socket = io('http://localhost:5000');
+    const socket = io(API_BASE_URL);
 
     socket.on('connect', () => {
       socket.emit('join_user', user._id || user.id);
@@ -114,7 +115,7 @@ export const AuthProvider = ({ children }) => {
     const refreshToken = localStorage.getItem('refreshToken');
     if (refreshToken) {
       try {
-        await fetch('http://localhost:5000/api/auth/logout', {
+        await fetch(`${API_BASE_URL}/api/auth/logout`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refreshToken })

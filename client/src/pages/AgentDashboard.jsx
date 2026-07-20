@@ -13,6 +13,7 @@ import { NotificationBell } from '../components/auth/NotificationBell';
 import { RoleSettings } from '../components/auth/RoleSettings';
 import { SupportCenter } from '../components/support/SupportCenter';
 import { io } from 'socket.io-client';
+import API_BASE_URL from '../config/api';
 
 const AgentDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -50,7 +51,7 @@ const AgentDashboard = () => {
 
   // Listen to Socket.io updates for real-time logistics sync
   useEffect(() => {
-    const socket = io('http://localhost:5000');
+    const socket = io(API_BASE_URL);
     socket.on('connect', () => {
       socket.emit('join_role', 'agent');
       if (user?.id || user?.userId) {
@@ -72,7 +73,7 @@ const AgentDashboard = () => {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${API_BASE_URL}/api/orders`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -105,7 +106,7 @@ const AgentDashboard = () => {
     setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/orders/${taskId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/orders/${taskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -131,7 +132,7 @@ const AgentDashboard = () => {
     setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/orders/${taskId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/orders/${taskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -165,7 +166,7 @@ const AgentDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/orders/${taskId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/orders/${taskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

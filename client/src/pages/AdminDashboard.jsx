@@ -15,6 +15,7 @@ import { NotificationBell } from '../components/auth/NotificationBell';
 import { RoleSettings } from '../components/auth/RoleSettings';
 import { AdminSupportCenter } from '../components/support/AdminSupportCenter';
 import { io } from 'socket.io-client';
+import API_BASE_URL from '../config/api';
 
 const AdminDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -131,7 +132,7 @@ const AdminDashboard = () => {
 
   // Listen to Socket.io updates for real-time logistics sync
   useEffect(() => {
-    const socket = io('http://localhost:5000');
+    const socket = io(API_BASE_URL);
     socket.on('connect', () => {
       socket.emit('join_role', 'admin');
       if (user?.id || user?.userId) {
@@ -155,13 +156,13 @@ const AdminDashboard = () => {
       const token = localStorage.getItem('token');
       
       // 1. Fetch Hubs
-      const hubsRes = await fetch('http://localhost:5000/api/hubs');
+      const hubsRes = await fetch(`${API_BASE_URL}/api/hubs`);
       if (!hubsRes.ok) throw new Error('Failed to load hubs');
       const hubsData = await hubsRes.json();
       setHubs(hubsData);
 
       // 2. Fetch Orders
-      const ordersRes = await fetch('http://localhost:5000/api/orders', {
+      const ordersRes = await fetch(`${API_BASE_URL}/api/orders`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!ordersRes.ok) throw new Error('Failed to load orders');
@@ -169,7 +170,7 @@ const AdminDashboard = () => {
       setOrders(ordersData);
 
       // 3. Fetch Registered Users/Agents
-      const usersRes = await fetch('http://localhost:5000/api/auth/users', {
+      const usersRes = await fetch(`${API_BASE_URL}/api/auth/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!usersRes.ok) throw new Error('Failed to load user directories');
@@ -243,7 +244,7 @@ const AdminDashboard = () => {
       const token = localStorage.getItem('token');
       let response;
       if (editingHubId) {
-        response = await fetch(`http://localhost:5000/api/hubs/${editingHubId}`, {
+        response = await fetch(`${API_BASE_URL}/api/hubs/${editingHubId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -252,7 +253,7 @@ const AdminDashboard = () => {
           body: JSON.stringify(payload)
         });
       } else {
-        response = await fetch('http://localhost:5000/api/hubs', {
+        response = await fetch(`${API_BASE_URL}/api/hubs`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -281,7 +282,7 @@ const AdminDashboard = () => {
     setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/hubs/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/hubs/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -309,7 +310,7 @@ const AdminDashboard = () => {
     setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/auth/users/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/users/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -345,7 +346,7 @@ const AdminDashboard = () => {
 
       let response;
       if (editingOrder) {
-        response = await fetch(`http://localhost:5000/api/orders/${editingOrder._id}`, {
+        response = await fetch(`${API_BASE_URL}/api/orders/${editingOrder._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -354,7 +355,7 @@ const AdminDashboard = () => {
           body: JSON.stringify(payload)
         });
       } else {
-        response = await fetch('http://localhost:5000/api/orders', {
+        response = await fetch(`${API_BASE_URL}/api/orders`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -408,7 +409,7 @@ const AdminDashboard = () => {
         };
       }
 
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -438,7 +439,7 @@ const AdminDashboard = () => {
   const handleAssignAgent = async (orderId, agentId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -458,7 +459,7 @@ const AdminDashboard = () => {
   const handleUpdateStatus = async (orderId, status) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1359,7 +1360,7 @@ const AdminDashboard = () => {
                                 onClick={async () => {
                                   if (!window.confirm('Delete this order entry permanently?')) return;
                                   const token = localStorage.getItem('token');
-                                  await fetch(`http://localhost:5000/api/orders/${o._id}`, {
+                                  await fetch(`${API_BASE_URL}/api/orders/${o._id}`, {
                                     method: 'DELETE',
                                     headers: { 'Authorization': `Bearer ${token}` }
                                   });

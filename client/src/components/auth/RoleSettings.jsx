@@ -4,6 +4,7 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { AuthContext } from '../../context/AuthContext';
 import { AvatarUpload } from './AvatarUpload';
+import API_BASE_URL from '../../config/api';
 import { 
   User, Truck, Shield, ShieldCheck, Mail, Phone, MapPin, Key, 
   Trash2, Bell, Globe, Moon, RefreshCw, AlertCircle, PlayCircle 
@@ -79,7 +80,7 @@ export const RoleSettings = () => {
     setLoadingUsers(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/auth/users', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -97,7 +98,7 @@ export const RoleSettings = () => {
     setLoadingLogs(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/auth/audit-logs', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/audit-logs`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -119,7 +120,7 @@ export const RoleSettings = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/profile', {
+      const response = await fetch(`${API_BASE_URL}/api/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +167,7 @@ export const RoleSettings = () => {
     setAvailability(checked);
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:5000/api/auth/settings', {
+      await fetch(`${API_BASE_URL}/api/auth/settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -186,7 +187,7 @@ export const RoleSettings = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/auth/account', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/account`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -205,7 +206,7 @@ export const RoleSettings = () => {
     if (!window.confirm('Delete this user account?')) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/auth/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/users/${userId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
