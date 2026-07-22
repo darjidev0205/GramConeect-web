@@ -1,7 +1,6 @@
-const { Resend } = require("resend");
 const nodemailer = require("nodemailer");
 
-let resendClient = null;
+const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 let etherealTransporter = null;
 
 /**
@@ -47,14 +46,14 @@ const createOtpEmailTemplate = ({ otp, role, expiresInMinutes = 5 }) => {
 </head>
 <body>
   <div class="container">
-    <div class="logo"> GramConnect</div>
+    <div class="logo">🚚 GramConnect</div>
     <div class="title">Security Verification Code</div>
     <div class="subtitle">Use the verification code below to confirm your login or registration as <strong>${safeRole}</strong>.</div>
     <div class="otp-box">
       <div class="otp-code">${safeOtp}</div>
-      <div class="expiry"> Valid for ${safeExpiry} minutes</div>
+      <div class="expiry">⏱️ Valid for ${safeExpiry} minutes</div>
     </div>
-    <div class="warning"> Never share this OTP with anyone. GramConnect staff will never ask for your code.</div>
+    <div class="warning">🔒 Never share this OTP with anyone. GramConnect staff will never ask for your code.</div>
     <div class="footer">If you did not request this verification code, please safely ignore this email.</div>
   </div>
 </body>
@@ -63,62 +62,103 @@ const createOtpEmailTemplate = ({ otp, role, expiresInMinutes = 5 }) => {
 };
 
 /**
- * Returns a lazy-initialized Resend client instance.
+ * Validates Brevo environment configuration.
  */
-const getResendClient = () => {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY is not configured");
+const getBrevoConfiguration = () => {
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderName = process.env.EMAIL_FROM_NAME || "GramConnect";
+  const senderEmail = process.env.EMAIL_FROM_ADDRESS;
+
+  if (!apiKey) {
+    throw new Error("BREVO_API_KEY is not configured");
   }
 
-  if (!resendClient) {
-    resendClient = new Resend(process.env.RESEND_API_KEY);
+  if (!senderEmail) {
+    throw new Error("EMAIL_FROM_ADDRESS is not configured");
   }
 
-  return resendClient;
+  return {
+    apiKey,
+    senderName,
+    senderEmail,
+  };
 };
 
 /**
- * Sends OTP email using Resend HTTPS API.
+ * Sends OTP email using Brevo Transactional Email HTTPS API.
  */
-const sendOtpEmailWithResend = async ({
+const sendOtpEmailWithBrevo = async ({
   email,
   otp,
   role,
   expiresInMinutes = 5,
 }) => {
-  const resend = getResendClient();
+  const { apiKey, senderName, senderEmail } = getBrevoConfiguration();
 
-  const from =
-    process.env.EMAIL_FROM ||
-    "GramConnect <onboarding@resend.dev>";
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.signal.aborted || controller.abort(), 15000);
 
-  const { data, error } = await resend.emails.send({
-    from,
-    to: [email],
+  const payload = {
+    sender: {
+      name: senderName,
+      email: senderEmail,
+    },
+    to: [
+      {
+        email,
+      },
+    ],
     subject: "Your GramConnect verification code",
-    html: createOtpEmailTemplate({
+    htmlContent: createOtpEmailTemplate({
       otp,
       role,
       expiresInMinutes,
     }),
-  });
+  };
 
-  if (error) {
-    console.error("Resend email failed:", {
-      name: error.name,
-      message: error.message,
+  try {
+    const response = await fetch(BREVO_API_URL, {
+      method: "POST",
+      headers: {
+        "api-key": apiKey,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
     });
 
-    throw new Error("Unable to send OTP email");
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      console.error("Brevo OTP email failed", {
+        status: response.status,
+        providerCode: errorBody?.code,
+        providerMessage: errorBody?.message,
+        recipientDomain: email.split("@")[1] || "unknown",
+      });
+      throw new Error(`Brevo email provider error (HTTP ${response.status})`);
+    }
+
+    const data = await response.json();
+    const messageId = data?.messageId;
+
+    console.log("OTP email sent successfully via Brevo Message ID:", messageId);
+
+    return {
+      success: true,
+      provider: "brevo",
+      messageId,
+    };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError" || controller.signal.aborted) {
+      console.error("Brevo OTP email failed: Request timeout (15s exceeded)");
+      throw new Error("Email provider timeout");
+    }
+    throw err;
   }
-
-  console.log("OTP email sent successfully via Resend ID:", data?.id);
-
-  return {
-    success: true,
-    provider: "resend",
-    messageId: data?.id,
-  };
 };
 
 /**
@@ -144,9 +184,8 @@ const sendOtpEmailWithEthereal = async ({
     etherealTransporter.defaultSender = testAccount.user;
   }
 
-  const from =
-    process.env.EMAIL_FROM ||
-    `GramConnect <${etherealTransporter.defaultSender}>`;
+  const fromName = process.env.EMAIL_FROM_NAME || "GramConnect";
+  const from = `${fromName} <${etherealTransporter.defaultSender}>`;
 
   const info = await etherealTransporter.sendMail({
     from,
@@ -181,7 +220,7 @@ const getEmailProvider = () => {
   if (process.env.EMAIL_PROVIDER) {
     return process.env.EMAIL_PROVIDER.toLowerCase();
   }
-  return process.env.NODE_ENV === "production" ? "resend" : "ethereal";
+  return process.env.NODE_ENV === "production" ? "brevo" : "ethereal";
 };
 
 /**
@@ -214,8 +253,8 @@ const sendOtpEmail = async (emailOrPayload, otpCode, role, expiresInMinutes = 5)
   const provider = getEmailProvider();
   console.log(`Email provider selected: ${provider}`);
 
-  if (provider === "resend") {
-    return sendOtpEmailWithResend(payload);
+  if (provider === "brevo") {
+    return sendOtpEmailWithBrevo(payload);
   }
 
   if (provider === "ethereal") {
@@ -227,7 +266,8 @@ const sendOtpEmail = async (emailOrPayload, otpCode, role, expiresInMinutes = 5)
 
 module.exports = {
   sendOtpEmail,
-  sendOtpEmailWithResend,
+  sendOtpEmailWithBrevo,
   sendOtpEmailWithEthereal,
   createOtpEmailTemplate,
+  getBrevoConfiguration,
 };
