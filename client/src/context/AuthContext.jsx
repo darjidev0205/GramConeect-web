@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-import API_BASE_URL from '../config/api';
+import api, { API_BASE_URL, getErrorMessage } from '../services/api';
 
 export const AuthContext = createContext();
 
@@ -13,18 +13,13 @@ export const AuthProvider = ({ children }) => {
     if (!refreshToken) return null;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken })
-      });
-      if (!response.ok) throw new Error('Refresh revoked');
-      const data = await response.json();
+      const response = await api.post('/api/auth/refresh', { refreshToken });
+      const data = response.data;
       localStorage.setItem('token', data.token);
       localStorage.setItem('refreshToken', data.refreshToken);
       return data.token;
     } catch (err) {
-      console.error('Session refresh failed:', err);
+      console.error('Session refresh failed:', getErrorMessage(err));
       logout();
       return null;
     }
@@ -37,42 +32,28 @@ export const AuthProvider = ({ children }) => {
 
       if (token) {
         try {
-          const response = await fetch(`${API_BASE_URL}/api/profile`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
-          } else {
-            // Access token expired, try to refresh
-            const newToken = await refreshSession();
-            if (newToken) {
-              const retryResponse = await fetch(`${API_BASE_URL}/api/profile`, {
-                headers: { 'Authorization': `Bearer ${newToken}` }
-              });
-              if (retryResponse.ok) {
-                const userData = await retryResponse.json();
-                setUser(userData);
-              }
+          const response = await api.get('/api/profile');
+          setUser(response.data);
+        } catch (err) {
+          // Token expired or invalid, try to refresh
+          const newToken = await refreshSession();
+          if (newToken) {
+            try {
+              const retryResponse = await api.get('/api/profile');
+              setUser(retryResponse.data);
+            } catch (retryErr) {
+              console.error('Retry profile fetch failed:', getErrorMessage(retryErr));
             }
           }
-        } catch (err) {
-          console.error('Initial profile fetch failed:', err);
         }
       } else if (refreshToken) {
-        // Attempt to auto-refresh session if access token is missing but refresh token exists
         const newToken = await refreshSession();
         if (newToken) {
           try {
-            const response = await fetch(`${API_BASE_URL}/api/profile`, {
-              headers: { 'Authorization': `Bearer ${newToken}` }
-            });
-            if (response.ok) {
-              const userData = await response.json();
-              setUser(userData);
-            }
+            const response = await api.get('/api/profile');
+            setUser(response.data);
           } catch (err) {
-            console.error('Error fetching profile after refresh:', err);
+            console.error('Error fetching profile after refresh:', getErrorMessage(err));
           }
         }
       }
@@ -85,7 +66,10 @@ export const AuthProvider = ({ children }) => {
   // Listen to Socket.io updates for Profile Sync
   useEffect(() => {
     if (!user) return;
-    const socket = io(API_BASE_URL);
+    const socket = io(API_BASE_URL, {
+      withCredentials: true,
+      transports: ['websocket', 'polling']
+    });
 
     socket.on('connect', () => {
       socket.emit('join_user', user._id || user.id);
@@ -107,7 +91,6 @@ export const AuthProvider = ({ children }) => {
     if (refreshToken) {
       localStorage.setItem('refreshToken', refreshToken);
     }
-    // NEVER save user object to localStorage! MongoDB is the single source of truth.
     setUser(userData);
   };
 
@@ -115,13 +98,9 @@ export const AuthProvider = ({ children }) => {
     const refreshToken = localStorage.getItem('refreshToken');
     if (refreshToken) {
       try {
-        await fetch(`${API_BASE_URL}/api/auth/logout`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken })
-        });
+        await api.post('/api/auth/logout', { refreshToken });
       } catch (err) {
-        console.error('Server logout failed:', err);
+        console.error('Server logout failed:', getErrorMessage(err));
       }
     }
     localStorage.removeItem('token');

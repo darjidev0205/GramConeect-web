@@ -13,7 +13,7 @@ import { NotificationBell } from '../components/auth/NotificationBell';
 import { RoleSettings } from '../components/auth/RoleSettings';
 import { SupportCenter } from '../components/support/SupportCenter';
 import { io } from 'socket.io-client';
-import API_BASE_URL from '../config/api';
+import api, { API_BASE_URL, getErrorMessage } from '../services/api';
 
 const AgentDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -51,7 +51,10 @@ const AgentDashboard = () => {
 
   // Listen to Socket.io updates for real-time logistics sync
   useEffect(() => {
-    const socket = io(API_BASE_URL);
+    const socket = io(API_BASE_URL, {
+      withCredentials: true,
+      transports: ['websocket', 'polling']
+    });
     socket.on('connect', () => {
       socket.emit('join_role', 'agent');
       if (user?.id || user?.userId) {
@@ -72,25 +75,17 @@ const AgentDashboard = () => {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/orders`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch tasks');
-      const data = await response.json();
+      const response = await api.get('/api/orders');
+      const data = response.data;
       
-      // Active pool: pending (unassigned) and out_for_delivery (assigned to me)
       const active = data.filter(t => t.status !== 'delivered' && t.status !== 'cancelled');
-      // History pool: completed/delivered by this agent
-      const history = data.filter(t => t.status === 'delivered' && t.agent === user.id);
+      const history = data.filter(t => t.status === 'delivered' && (t.agent === user?.id || t.agent?._id === user?.id || t.agent === user?.userId));
 
       setTasks(active);
       setHistoryTasks(history);
     } catch (err) {
       console.error(err);
-      setError('Could not sync logistics feed.');
+      setError(getErrorMessage(err, 'Could not sync logistics feed.'));
     } finally {
       setLoading(false);
     }
@@ -105,25 +100,15 @@ const AgentDashboard = () => {
     setError('');
     setSuccess('');
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/orders/${taskId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          status: 'out_for_delivery',
-          agentId: user.id
-        })
+      await api.put(`/api/orders/${taskId}`, {
+        status: 'out_for_delivery',
+        agentId: user.id || user.userId
       });
-
-      if (!response.ok) throw new Error('Failed to accept task');
       setSuccess('Task assigned to your queue.');
       fetchTasks();
     } catch (err) {
       console.error(err);
-      setError('Could not accept package.');
+      setError(getErrorMessage(err, 'Could not accept package.'));
     }
   };
 
@@ -131,25 +116,15 @@ const AgentDashboard = () => {
     setError('');
     setSuccess('');
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/orders/${taskId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          status: 'pending',
-          agentId: null
-        })
+      await api.put(`/api/orders/${taskId}`, {
+        status: 'pending',
+        agentId: null
       });
-
-      if (!response.ok) throw new Error('Failed to return task to pool');
       setSuccess('Task returned to available pool.');
       fetchTasks();
     } catch (err) {
       console.error(err);
-      setError('Could not release task.');
+      setError(getErrorMessage(err, 'Could not release task.'));
     }
   };
 
@@ -165,19 +140,9 @@ const AgentDashboard = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/orders/${taskId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          status: 'delivered'
-        })
+      await api.put(`/api/orders/${taskId}`, {
+        status: 'delivered'
       });
-
-      if (!response.ok) throw new Error('Failed to deliver task');
 
       setSuccess('Delivery completed and confirmed successfully!');
       setOtpMode(null);
@@ -185,7 +150,7 @@ const AgentDashboard = () => {
       fetchTasks();
     } catch (err) {
       console.error(err);
-      setError('Error verifying delivery code.');
+      setError(getErrorMessage(err, 'Error verifying delivery code.'));
     }
   };
 

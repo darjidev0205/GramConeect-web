@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Truck } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { RoleSelector } from '../components/auth/RoleSelector';
-import API_BASE_URL from '../config/api';
+import api, { getErrorMessage } from '../services/api';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -35,25 +35,16 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password, role })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+      const response = await api.post('/api/auth/login', { email, password, role });
+      const data = response.data;
       
-      login(data.user, data.token);
+      login(data.user, data.token, data.refreshToken);
 
       if (data.user.role === 'admin') navigate('/admin-dashboard');
       else if (data.user.role === 'agent') navigate('/agent-dashboard');
       else navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Server Error. Please try again.');
+      setError(getErrorMessage(err, 'Login failed. Please check your credentials.'));
     } finally {
       setIsLoading(false);
     }

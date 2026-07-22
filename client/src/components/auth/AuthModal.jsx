@@ -6,7 +6,7 @@ import { Button } from '../ui/button';
 import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { RoleSelector } from './RoleSelector';
-import API_BASE_URL from '../../config/api';
+import api, { getErrorMessage } from '../../services/api';
 
 const steps = {
   METHOD: 'METHOD',
@@ -192,16 +192,8 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/otp/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target, type: authMethod })
-      });
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to send verification code.');
-      }
+      const response = await api.post('/api/otp/send', { target, type: authMethod });
+      const data = response.data;
 
       setTimer(30);
       let successMsg = 'Verification code sent successfully.';
@@ -211,7 +203,7 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
       setSuccess(successMsg);
       goToStep(steps.OTP, 1);
     } catch (err) {
-      setError(err.message || 'Server connection error. Please try again.');
+      setError(getErrorMessage(err, 'Failed to send verification code.'));
     } finally {
       setLoading(false);
     }
@@ -229,16 +221,8 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
     setSuccess('');
     try {
       const target = getTarget();
-      const response = await fetch(`${API_BASE_URL}/api/otp/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target, type: authMethod })
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to resend verification code.');
-      }
+      const response = await api.post('/api/otp/send', { target, type: authMethod });
+      const data = response.data;
 
       setTimer(30);
       setResendCount(c => c + 1);
@@ -248,7 +232,7 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
       }
       setSuccess(successMsg);
     } catch (err) {
-      setError(err.message || 'Could not dispatch OTP.');
+      setError(getErrorMessage(err, 'Could not dispatch OTP.'));
     } finally {
       setLoading(false);
     }
@@ -268,16 +252,8 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/otp/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target, otp, role })
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Verification failed.');
-      }
+      const response = await api.post('/api/otp/verify', { target, otp, role });
+      const data = response.data;
 
       if (data.exists) {
         login(data.user, data.token, data.refreshToken);
@@ -296,7 +272,7 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
         goToStep(steps.REGISTER, 1);
       }
     } catch (err) {
-      setError(err.message || 'Invalid or expired OTP code.');
+      setError(getErrorMessage(err, 'Invalid or expired OTP code.'));
     } finally {
       setLoading(false);
     }
@@ -376,25 +352,15 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
         };
       }
 
-      console.log('Registration Payload:', JSON.stringify(payload, null, 2));
-
-      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed.');
-      }
+      const response = await api.post('/api/auth/register', payload);
+      const data = response.data;
 
       login(data.user, data.token, data.refreshToken);
       onClose();
       if (data.user.role === 'agent') navigate('/agent-dashboard');
       else navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Failed to complete registration.');
+      setError(getErrorMessage(err, 'Failed to complete registration.'));
     } finally {
       setLoading(false);
     }

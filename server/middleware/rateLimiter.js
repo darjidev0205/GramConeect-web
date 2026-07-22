@@ -5,7 +5,9 @@ const rateLimitLogs = {};
  * Allows up to 3 OTP generation requests per target (email or phone) per minute.
  */
 const otpRateLimiter = (req, res, next) => {
-  const target = req.body.target;
+  if (req.method === 'OPTIONS') return next();
+
+  const target = req.body?.target;
   if (!target) {
     return res.status(400).json({ message: 'Target destination (email or phone) is required' });
   }

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Camera, Trash2, Loader2, Image as ImageIcon } from 'lucide-react';
 import { Button } from '../ui/button';
-import API_BASE_URL from '../../config/api';
+import api, { getErrorMessage } from '../../services/api';
 
 export const AvatarUpload = ({ currentImage, onUploadSuccess, onRemoveSuccess }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -13,13 +13,11 @@ export const AvatarUpload = ({ currentImage, onUploadSuccess, onRemoveSuccess })
     const file = e.target.files[0];
     if (!file) return;
 
-    // Client-side file type validation
     if (!file.type.match(/image\/(jpeg|jpg|png|webp)/)) {
       setError('Please select a valid image file (.jpg, .png, .webp)');
       return;
     }
 
-    // Limit to 5MB
     if (file.size > 5 * 1024 * 1024) {
       setError('File size must be under 5MB.');
       return;
@@ -33,23 +31,12 @@ export const AvatarUpload = ({ currentImage, onUploadSuccess, onRemoveSuccess })
     formData.append('avatar', file);
 
     try {
-      const token = localStorage.getItem('token');
       setUploadProgress(50);
-      
-      const response = await fetch(`${API_BASE_URL}/api/profile/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
+      const response = await api.post('/api/profile/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-
       setUploadProgress(80);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Image upload failed');
-      }
+      const data = response.data;
 
       setUploadProgress(100);
       setTimeout(() => {
@@ -59,7 +46,7 @@ export const AvatarUpload = ({ currentImage, onUploadSuccess, onRemoveSuccess })
 
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Error uploading image');
+      setError(getErrorMessage(err, 'Error uploading image'));
       setIsUploading(false);
     }
   };
@@ -68,19 +55,11 @@ export const AvatarUpload = ({ currentImage, onUploadSuccess, onRemoveSuccess })
     if (!window.confirm('Are you sure you want to remove your profile image?')) return;
     setIsUploading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/profile/avatar`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        onRemoveSuccess();
-      }
+      await api.delete('/api/profile/avatar');
+      onRemoveSuccess();
     } catch (err) {
       console.error(err);
-      setError('Error removing image');
+      setError(getErrorMessage(err, 'Error removing image'));
     } finally {
       setIsUploading(false);
     }

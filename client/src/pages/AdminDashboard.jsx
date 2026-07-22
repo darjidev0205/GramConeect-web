@@ -15,7 +15,7 @@ import { NotificationBell } from '../components/auth/NotificationBell';
 import { RoleSettings } from '../components/auth/RoleSettings';
 import { AdminSupportCenter } from '../components/support/AdminSupportCenter';
 import { io } from 'socket.io-client';
-import API_BASE_URL from '../config/api';
+import api, { API_BASE_URL, getErrorMessage } from '../services/api';
 
 const AdminDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -132,7 +132,10 @@ const AdminDashboard = () => {
 
   // Listen to Socket.io updates for real-time logistics sync
   useEffect(() => {
-    const socket = io(API_BASE_URL);
+    const socket = io(API_BASE_URL, {
+      withCredentials: true,
+      transports: ['websocket', 'polling']
+    });
     socket.on('connect', () => {
       socket.emit('join_role', 'admin');
       if (user?.id || user?.userId) {
@@ -140,9 +143,8 @@ const AdminDashboard = () => {
       }
     });
 
-    socket.on('order_update', () => {
-      fetchAdminData();
-    });
+    socket.on('dashboard_update', () => fetchAdminData());
+    socket.on('order_update', () => fetchAdminData());
 
     return () => {
       socket.disconnect();
@@ -153,33 +155,18 @@ const AdminDashboard = () => {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      
-      // 1. Fetch Hubs
-      const hubsRes = await fetch(`${API_BASE_URL}/api/hubs`);
-      if (!hubsRes.ok) throw new Error('Failed to load hubs');
-      const hubsData = await hubsRes.json();
-      setHubs(hubsData);
+      const [hubsRes, ordersRes, usersRes] = await Promise.all([
+        api.get('/api/hubs'),
+        api.get('/api/orders'),
+        api.get('/api/auth/users')
+      ]);
 
-      // 2. Fetch Orders
-      const ordersRes = await fetch(`${API_BASE_URL}/api/orders`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!ordersRes.ok) throw new Error('Failed to load orders');
-      const ordersData = await ordersRes.json();
-      setOrders(ordersData);
-
-      // 3. Fetch Registered Users/Agents
-      const usersRes = await fetch(`${API_BASE_URL}/api/auth/users`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!usersRes.ok) throw new Error('Failed to load user directories');
-      const usersData = await usersRes.json();
-      setUsersList(usersData);
-
+      setHubs(hubsRes.data);
+      setOrders(ordersRes.data);
+      setUsersList(usersRes.data);
     } catch (err) {
       console.error(err);
-      setError('Could not establish administrative connection.');
+      setError(getErrorMessage(err, 'Could not establish administrative connection.'));
     } finally {
       setLoading(false);
     }
@@ -241,29 +228,11 @@ const AdminDashboard = () => {
     };
 
     try {
-      const token = localStorage.getItem('token');
-      let response;
       if (editingHubId) {
-        response = await fetch(`${API_BASE_URL}/api/hubs/${editingHubId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
+        await api.put(`/api/hubs/${editingHubId}`, payload);
       } else {
-        response = await fetch(`${API_BASE_URL}/api/hubs`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
+        await api.post('/api/hubs', payload);
       }
-
-      if (!response.ok) throw new Error('Could not save hub');
 
       setSuccess(editingHubId ? 'Hub updated successfully.' : 'New hub node established.');
       setShowHubModal(false);
@@ -272,7 +241,7 @@ const AdminDashboard = () => {
       setHubAddress('');
       fetchAdminData();
     } catch (err) {
-      setError(err.message || 'Error processing hub node.');
+      setError(getErrorMessage(err, 'Error processing hub node.'));
     }
   };
 
@@ -281,16 +250,11 @@ const AdminDashboard = () => {
     setError('');
     setSuccess('');
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/hubs/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error('Decomission failed');
+      await api.delete(`/api/hubs/${id}`);
       setSuccess('Hub decommissioned successfully.');
       fetchAdminData();
     } catch (err) {
-      setError(err.message || 'Error deleting hub.');
+      setError(getErrorMessage(err, 'Error deleting hub.'));
     }
   };
 
@@ -309,16 +273,11 @@ const AdminDashboard = () => {
     setError('');
     setSuccess('');
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/auth/users/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error('Delete failed');
+      await api.delete(`/api/auth/users/${id}`);
       setSuccess('Account directory profile deleted.');
       fetchAdminData();
     } catch (err) {
-      setError(err.message || 'Error deleting profile.');
+      setError(getErrorMessage(err, 'Error deleting profile.'));
     }
   };
 
@@ -328,7 +287,6 @@ const AdminDashboard = () => {
     setError('');
     setSuccess('');
     try {
-      const token = localStorage.getItem('token');
       const payload = {
         recipientName: orderForm.recipientName,
         recipientPhone: orderForm.recipientPhone,
@@ -344,28 +302,12 @@ const AdminDashboard = () => {
         paymentStatus: orderForm.paymentStatus
       };
 
-      let response;
       if (editingOrder) {
-        response = await fetch(`${API_BASE_URL}/api/orders/${editingOrder._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
+        await api.put(`/api/orders/${editingOrder._id}`, payload);
       } else {
-        response = await fetch(`${API_BASE_URL}/api/orders`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
+        await api.post('/api/orders', payload);
       }
 
-      if (!response.ok) throw new Error('Failed to save order.');
       setSuccess(editingOrder ? 'Order modified successfully.' : 'New logistics order placed.');
       setShowOrderModal(false);
       setEditingOrder(null);
@@ -381,7 +323,7 @@ const AdminDashboard = () => {
       });
       fetchAdminData();
     } catch (err) {
-      setError(err.message || 'Error saving order.');
+      setError(getErrorMessage(err, 'Error saving order.'));
     }
   };
 
@@ -409,14 +351,7 @@ const AdminDashboard = () => {
         };
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.message || 'Registration failed.');
+      await api.post('/api/auth/register', payload);
       setSuccess(`New ${userRoleToCreate} directory account created.`);
       setShowUserModal(false);
       setUserForm({
@@ -431,47 +366,29 @@ const AdminDashboard = () => {
       });
       fetchAdminData();
     } catch (err) {
-      setError(err.message || 'Error creating profile.');
+      setError(getErrorMessage(err, 'Error creating profile.'));
     }
   };
 
   // Quick Action: Assign Agent manually
   const handleAssignAgent = async (orderId, agentId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ agentId })
-      });
-      if (!response.ok) throw new Error('Assignment failed');
+      await api.put(`/api/orders/${orderId}`, { agentId });
       setSuccess('Agent assigned to transit.');
       fetchAdminData();
     } catch (err) {
-      setError(err.message);
+      setError(getErrorMessage(err, 'Assignment failed'));
     }
   };
 
   // Quick Action: Update order status manually
   const handleUpdateStatus = async (orderId, status) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status })
-      });
-      if (!response.ok) throw new Error('Status update failed');
+      await api.put(`/api/orders/${orderId}`, { status });
       setSuccess('Order status updated.');
       fetchAdminData();
     } catch (err) {
-      setError(err.message);
+      setError(getErrorMessage(err, 'Status update failed'));
     }
   };
 
@@ -1359,12 +1276,12 @@ const AdminDashboard = () => {
                               <button 
                                 onClick={async () => {
                                   if (!window.confirm('Delete this order entry permanently?')) return;
-                                  const token = localStorage.getItem('token');
-                                  await fetch(`${API_BASE_URL}/api/orders/${o._id}`, {
-                                    method: 'DELETE',
-                                    headers: { 'Authorization': `Bearer ${token}` }
-                                  });
-                                  fetchAdminData();
+                                  try {
+                                    await api.delete(`/api/orders/${o._id}`);
+                                    fetchAdminData();
+                                  } catch (err) {
+                                    console.error(err);
+                                  }
                                 }} 
                                 className="p-1.5 rounded bg-white/5 hover:bg-white/10 border border-white/5 text-red-400 hover:text-red-300 transition-colors"
                               >

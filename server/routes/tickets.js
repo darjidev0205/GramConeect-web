@@ -38,8 +38,8 @@ router.post('/', authenticate, upload.array('attachments', 3), async (req, res) 
   }
 
   try {
-    const ticketId = 'TK-' + Math.floor(100000 + Math.random() * 900000);
-    const attachments = req.files ? req.files.map(f => `http://localhost:5000/uploads/${f.filename}`) : [];
+    const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
+    const attachments = req.files ? req.files.map(f => `${baseUrl}/uploads/${f.filename}`) : [];
 
     const newTicket = new SupportTicket({
       ticketId,
@@ -152,7 +152,8 @@ router.post('/:id/replies', authenticate, upload.single('attachment'), async (re
       return res.status(403).json({ message: 'Forbidden: Access denied.' });
     }
 
-    const attachmentUrl = req.file ? `http://localhost:5000/uploads/${req.file.filename}` : undefined;
+    const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
+    const attachmentUrl = req.file ? `${baseUrl}/uploads/${req.file.filename}` : undefined;
 
     ticket.replies.push({
       sender: userId,

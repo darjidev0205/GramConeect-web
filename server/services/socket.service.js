@@ -4,19 +4,21 @@ let ioInstance = null;
 const init = (server) => {
   const allowedOrigins = [
     "http://localhost:5173",
-    process.env.FRONTEND_URL
+    "http://localhost:3000",
+    "https://gram-coneect-web.vercel.app",
+    process.env.CLIENT_URL,
+    process.env.FRONTEND_URL,
   ].filter(Boolean);
 
   ioInstance = socketIo(server, {
     cors: {
       origin(origin, callback) {
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+        if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
           return callback(null, true);
         }
-        return callback(new Error(`Socket.io CORS blocked origin: ${origin}`));
+        return callback(null, false);
       },
-      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       credentials: true
     }
   });

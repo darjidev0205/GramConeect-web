@@ -6,7 +6,7 @@ import {
   Search, MessageSquare, AlertCircle, RefreshCw, X, Send, 
   Paperclip, CheckCircle2, ChevronRight, ShieldCheck, UserCheck, Trash2 
 } from 'lucide-react';
-import API_BASE_URL from '../../config/api';
+import api, { getErrorMessage } from '../../services/api';
 
 export const AdminSupportCenter = () => {
   const [tickets, setTickets] = useState([]);
@@ -33,23 +33,17 @@ export const AdminSupportCenter = () => {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
       const params = new URLSearchParams();
       if (statusFilter) params.append('status', statusFilter);
       if (priorityFilter) params.append('priority', priorityFilter);
       if (categoryFilter) params.append('category', categoryFilter);
       if (search) params.append('search', search);
 
-      const response = await fetch(`${API_BASE_URL}/api/tickets?${params.toString()}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setTickets(data);
-      }
+      const response = await api.get(`/api/tickets?${params.toString()}`);
+      setTickets(response.data);
     } catch (err) {
       console.error(err);
-      setError('Could not retrieve support tickets.');
+      setError(getErrorMessage(err, 'Could not retrieve support tickets.'));
     } finally {
       setLoading(false);
     }
@@ -66,22 +60,13 @@ export const AdminSupportCenter = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/tickets/${selectedTicket._id}/replies`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
+      const response = await api.post(`/api/tickets/${selectedTicket._id}/replies`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSelectedTicket(data);
-        setReplyMessage('');
-        setReplyAttachment(null);
-        fetchTickets();
-      }
+      setSelectedTicket(response.data);
+      setReplyMessage('');
+      setReplyAttachment(null);
+      fetchTickets();
     } catch (err) {
       console.error(err);
     }
@@ -89,23 +74,11 @@ export const AdminSupportCenter = () => {
 
   const handleStatusChange = async (ticketId, status) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (selectedTicket && selectedTicket._id === ticketId) {
-          setSelectedTicket(prev => ({ ...prev, status }));
-        }
-        fetchTickets();
+      const response = await api.put(`/api/tickets/${ticketId}/status`, { status });
+      if (selectedTicket && selectedTicket._id === ticketId) {
+        setSelectedTicket(prev => ({ ...prev, status }));
       }
+      fetchTickets();
     } catch (err) {
       console.error(err);
     }
@@ -113,27 +86,10 @@ export const AdminSupportCenter = () => {
 
   const handleAssignToMe = async (ticketId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}/assign`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ adminId: 'me' }) // Backend will map req.user.userId
-      });
-
-      if (response.ok) {
-        fetchTickets();
-        // Reload details
-        const detailsRes = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (detailsRes.ok) {
-          const data = await detailsRes.json();
-          setSelectedTicket(data);
-        }
-      }
+      await api.put(`/api/tickets/${ticketId}/assign`, { adminId: 'me' });
+      fetchTickets();
+      const detailsRes = await api.get(`/api/tickets/${ticketId}`);
+      setSelectedTicket(detailsRes.data);
     } catch (err) {
       console.error(err);
     }
@@ -142,15 +98,9 @@ export const AdminSupportCenter = () => {
   const handleDeleteTicket = async (ticketId) => {
     if (!window.confirm('WARNING: Delete this support ticket permanently?')) return;
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        setSelectedTicket(null);
-        fetchTickets();
-      }
+      await api.delete(`/api/tickets/${ticketId}`);
+      setSelectedTicket(null);
+      fetchTickets();
     } catch (err) {
       console.error(err);
     }

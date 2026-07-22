@@ -4,7 +4,7 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { AuthContext } from '../../context/AuthContext';
 import { AvatarUpload } from './AvatarUpload';
-import API_BASE_URL from '../../config/api';
+import api, { getErrorMessage } from '../../services/api';
 import { 
   User, Truck, Shield, ShieldCheck, Mail, Phone, MapPin, Key, 
   Trash2, Bell, Globe, Moon, RefreshCw, AlertCircle, PlayCircle 
@@ -79,14 +79,8 @@ export const RoleSettings = () => {
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/auth/users`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUsersList(data);
-      }
+      const response = await api.get('/api/auth/users');
+      setUsersList(response.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -97,14 +91,8 @@ export const RoleSettings = () => {
   const fetchAuditLogs = async () => {
     setLoadingLogs(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/auth/audit-logs`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAuditLogs(data);
-      }
+      const response = await api.get('/api/auth/audit-logs');
+      setAuditLogs(response.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -119,45 +107,33 @@ export const RoleSettings = () => {
     setSuccessMsg('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+      const response = await api.put('/api/profile', {
+        name,
+        email,
+        phone,
+        avatar,
+        address,
+        village,
+        password: password || undefined,
+        emergencyContact,
+        language,
+        theme,
+        notificationPreferences: {
+          push: pushNotif,
+          email: emailNotif
         },
-        body: JSON.stringify({
-          name,
-          email,
-          phone,
-          avatar,
-          address,
-          village,
-          password: password || undefined,
-          emergencyContact,
-          language,
-          theme,
-          notificationPreferences: {
-            push: pushNotif,
-            email: emailNotif
-          },
-          vehicle: user?.role === 'agent' ? {
-            type: vehicleType,
-            number: vehicleNumber,
-            licenseNumber
-          } : undefined
-        })
+        vehicle: user?.role === 'agent' ? {
+          type: vehicleType,
+          number: vehicleNumber,
+          licenseNumber
+        } : undefined
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Failed to update profile');
-
-      // Update AuthContext session state
-      setUser(data);
+      setUser(response.data);
       setSuccessMsg('Profile and preferences updated successfully.');
       setPassword('');
     } catch (err) {
-      setErrorMsg(err.message || 'Error updating settings');
+      setErrorMsg(getErrorMessage(err, 'Error updating settings'));
     } finally {
       setIsSaving(false);
     }
@@ -166,15 +142,7 @@ export const RoleSettings = () => {
   const handleToggleAvailability = async (checked) => {
     setAvailability(checked);
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`${API_BASE_URL}/api/auth/settings`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ availability: checked })
-      });
+      await api.put('/api/auth/settings', { availability: checked });
     } catch (err) {
       console.error(err);
     }
@@ -186,33 +154,18 @@ export const RoleSettings = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/auth/account`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        logout();
-      } else {
-        const data = await response.json();
-        setErrorMsg(data.message || 'Failed to delete account');
-      }
+      await api.delete('/api/auth/account');
+      logout();
     } catch (err) {
-      setErrorMsg('Error deleting account');
+      setErrorMsg(getErrorMessage(err, 'Error deleting account'));
     }
   };
 
   const handleAdminDeleteUser = async (userId) => {
     if (!window.confirm('Delete this user account?')) return;
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/auth/users/${userId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        setUsersList(prev => prev.filter(u => u._id !== userId));
-      }
+      await api.delete(`/api/auth/users/${userId}`);
+      setUsersList(prev => prev.filter(u => u._id !== userId));
     } catch (err) {
       console.error(err);
     }

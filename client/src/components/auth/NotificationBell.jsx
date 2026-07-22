@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Check, Trash2, CheckCircle2, Info, AlertTriangle, Volume2 } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import { io } from 'socket.io-client';
-import API_BASE_URL from '../../config/api';
+import api, { API_BASE_URL } from '../../services/api';
 
 export const NotificationBell = () => {
   const { user } = useContext(AuthContext);
@@ -39,15 +39,8 @@ export const NotificationBell = () => {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      const response = await fetch(`${API_BASE_URL}/api/notifications`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data);
-      }
+      const response = await api.get('/api/notifications');
+      setNotifications(response.data);
     } catch (err) {
       console.error('Error fetching notifications:', err);
     }
@@ -57,7 +50,10 @@ export const NotificationBell = () => {
     fetchNotifications();
 
     // Setup Socket.io client
-    const socket = io(API_BASE_URL);
+    const socket = io(API_BASE_URL, {
+      withCredentials: true,
+      transports: ['websocket', 'polling']
+    });
     socketRef.current = socket;
 
     socket.on('connect', () => {
@@ -91,16 +87,10 @@ export const NotificationBell = () => {
 
   const handleMarkAsRead = async (id) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        setNotifications(prev =>
-          prev.map(n => n._id === id ? { ...n, read: true } : n)
-        );
-      }
+      await api.put(`/api/notifications/${id}/read`);
+      setNotifications(prev =>
+        prev.map(n => n._id === id ? { ...n, read: true } : n)
+      );
     } catch (err) {
       console.error(err);
     }
@@ -108,14 +98,8 @@ export const NotificationBell = () => {
 
   const handleMarkAllRead = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      }
+      await api.put('/api/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (err) {
       console.error(err);
     }
@@ -124,14 +108,8 @@ export const NotificationBell = () => {
   const handleDelete = async (id, e) => {
     e.stopPropagation();
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/notifications/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        setNotifications(prev => prev.filter(n => n._id !== id));
-      }
+      await api.delete(`/api/notifications/${id}`);
+      setNotifications(prev => prev.filter(n => n._id !== id));
     } catch (err) {
       console.error(err);
     }

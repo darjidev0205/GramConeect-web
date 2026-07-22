@@ -14,7 +14,7 @@ import { NotificationBell } from '../components/auth/NotificationBell';
 import { RoleSettings } from '../components/auth/RoleSettings';
 import { SupportCenter } from '../components/support/SupportCenter';
 import { io } from 'socket.io-client';
-import API_BASE_URL from '../config/api';
+import api, { API_BASE_URL, getErrorMessage } from '../services/api';
 
 const UserDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -150,7 +150,10 @@ const UserDashboard = () => {
 
   // Listen to Socket.io updates for real-time logistics sync
   useEffect(() => {
-    const socket = io(API_BASE_URL);
+    const socket = io(API_BASE_URL, {
+      withCredentials: true,
+      transports: ['websocket', 'polling']
+    });
     socket.on('connect', () => {
       if (user?.id || user?.userId) {
         socket.emit('join_user', user.id || user.userId);
@@ -185,13 +188,11 @@ const UserDashboard = () => {
   const fetchHubs = async () => {
     setLoadingHubs(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/hubs`);
-      if (!response.ok) throw new Error('Failed to fetch hubs');
-      const data = await response.json();
-      setHubs(data);
+      const response = await api.get('/api/hubs');
+      setHubs(response.data);
     } catch (err) {
       console.error(err);
-      setError('Could not load delivery hubs.');
+      setError(getErrorMessage(err, 'Could not load delivery hubs.'));
     } finally {
       setLoadingHubs(false);
     }
@@ -200,18 +201,11 @@ const UserDashboard = () => {
   const fetchOrders = async () => {
     setLoadingOrders(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/orders`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch orders');
-      const data = await response.json();
-      setOrders(data);
+      const response = await api.get('/api/orders');
+      setOrders(response.data);
     } catch (err) {
       console.error(err);
-      setError('Could not sync logistics feed.');
+      setError(getErrorMessage(err, 'Could not sync logistics feed.'));
     } finally {
       setLoadingOrders(false);
     }
@@ -309,29 +303,19 @@ const UserDashboard = () => {
 
     setPlacingOrder(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+      await api.post('/api/orders', {
+        hub: selectedHub,
+        deliveryAddress: {
+          address: deliveryAddress,
+          landmark: 'Village Entrance',
+          lat: 20.5937,
+          lng: 78.9629
         },
-        body: JSON.stringify({
-          hub: selectedHub,
-          deliveryAddress: {
-            address: deliveryAddress,
-            landmark: 'Village Entrance',
-            lat: 20.5937,
-            lng: 78.9629
-          },
-          recipientName,
-          recipientPhone,
-          description,
-          price: deliveryCost
-        })
+        recipientName,
+        recipientPhone,
+        description,
+        price: deliveryCost
       });
-
-      if (!response.ok) throw new Error('Order creation failed');
       
       setSuccess('Your delivery request has been placed successfully!');
       setSelectedHub('');
@@ -342,7 +326,7 @@ const UserDashboard = () => {
       fetchOrders();
       setActiveTab('track');
     } catch (err) {
-      setError(err.message || 'Could not place delivery request.');
+      setError(getErrorMessage(err, 'Could not place delivery request.'));
     } finally {
       setPlacingOrder(false);
     }
@@ -352,22 +336,13 @@ const UserDashboard = () => {
     setError('');
     setSuccess('');
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          status: 'cancelled'
-        })
+      await api.put(`/api/orders/${orderId}`, {
+        status: 'cancelled'
       });
-      if (!response.ok) throw new Error('Could not cancel order');
       setSuccess('Delivery request cancelled successfully.');
       fetchOrders();
     } catch (err) {
-      setError(err.message || 'Could not process cancellation request.');
+      setError(getErrorMessage(err, 'Could not process cancellation request.'));
     }
   };
 

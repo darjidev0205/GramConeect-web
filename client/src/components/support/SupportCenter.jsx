@@ -6,7 +6,7 @@ import {
   Plus, MessageSquare, AlertCircle, Clock, CheckCircle2, ChevronRight, 
   Send, Paperclip, Star, RefreshCw, X, FileText, CornerDownRight 
 } from 'lucide-react';
-import API_BASE_URL from '../../config/api';
+import api, { getErrorMessage } from '../../services/api';
 
 export const SupportCenter = () => {
   const [tickets, setTickets] = useState([]);
@@ -37,19 +37,11 @@ export const SupportCenter = () => {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/tickets`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setTickets(data);
-      } else {
-        throw new Error('Failed to load tickets');
-      }
+      const response = await api.get('/api/tickets');
+      setTickets(response.data);
     } catch (err) {
       console.error(err);
-      setError('Could not retrieve support tickets.');
+      setError(getErrorMessage(err, 'Could not retrieve support tickets.'));
     } finally {
       setLoading(false);
     }
@@ -71,17 +63,10 @@ export const SupportCenter = () => {
     });
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/tickets`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
+      const response = await api.post('/api/tickets', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Failed to submit ticket');
+      const data = response.data;
 
       setSuccess(`Ticket ${data.ticketId} created successfully.`);
       setTitle('');
@@ -92,7 +77,7 @@ export const SupportCenter = () => {
       setIsCreating(false);
       fetchTickets();
     } catch (err) {
-      setError(err.message || 'Error creating ticket');
+      setError(getErrorMessage(err, 'Error creating ticket'));
     }
   };
 
@@ -107,22 +92,13 @@ export const SupportCenter = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/tickets/${selectedTicket._id}/replies`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
+      const response = await api.post(`/api/tickets/${selectedTicket._id}/replies`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSelectedTicket(data);
-        setReplyMessage('');
-        setReplyAttachment(null);
-        fetchTickets();
-      }
+      setSelectedTicket(response.data);
+      setReplyMessage('');
+      setReplyAttachment(null);
+      fetchTickets();
     } catch (err) {
       console.error(err);
     }
@@ -131,23 +107,12 @@ export const SupportCenter = () => {
   const handleCloseTicket = async (ticketId) => {
     if (!window.confirm('Close this ticket?')) return;
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: 'Closed' })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (selectedTicket && selectedTicket._id === ticketId) {
-          setSelectedTicket(prev => ({ ...prev, status: 'Closed', closedAt: data.closedAt }));
-        }
-        fetchTickets();
+      const response = await api.put(`/api/tickets/${ticketId}/status`, { status: 'Closed' });
+      const data = response.data;
+      if (selectedTicket && selectedTicket._id === ticketId) {
+        setSelectedTicket(prev => ({ ...prev, status: 'Closed', closedAt: data.closedAt }));
       }
+      fetchTickets();
     } catch (err) {
       console.error(err);
     }
@@ -155,21 +120,11 @@ export const SupportCenter = () => {
 
   const handleRateResolution = async (ticketId, rating) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}/rate`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ rating })
-      });
-      if (response.ok) {
-        if (selectedTicket && selectedTicket._id === ticketId) {
-          setSelectedTicket(prev => ({ ...prev, rating }));
-        }
-        fetchTickets();
+      await api.put(`/api/tickets/${ticketId}/rate`, { rating });
+      if (selectedTicket && selectedTicket._id === ticketId) {
+        setSelectedTicket(prev => ({ ...prev, rating }));
       }
+      fetchTickets();
     } catch (err) {
       console.error(err);
     }

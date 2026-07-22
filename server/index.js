@@ -25,31 +25,35 @@ socketService.init(server);
 // ---------------------------------------------------------------------------
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.FRONTEND_URL
+  "http://localhost:3000",
+  "https://gram-coneect-web.vercel.app",
+  process.env.CLIENT_URL,
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      // Allow requests with no origin (mobile apps, curl, server-to-server)
-      if (!origin) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+      return callback(null, true);
+    }
 
-      if (
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".vercel.app")
-      ) {
-        return callback(null, true);
-      }
+    console.error("Blocked CORS origin:", origin);
+    return callback(null, false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin"
+  ],
+  optionsSuccessStatus: 204
+};
 
-      return callback(new Error(`CORS blocked origin: ${origin}`));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-  })
-);
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 // Middleware
 app.use(express.json());
