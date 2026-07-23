@@ -7,9 +7,9 @@ const GlassCard = React.forwardRef(({ className, children, animationProps, glow 
     <motion.div
       ref={ref}
       className={cn(
-        "rounded-2xl border bg-card/50 text-card-foreground shadow-sm backdrop-blur-md overflow-hidden relative",
-        glow ? "hover:box-glow transition-all duration-300 border-primary/20 hover:border-primary/50" : "border-white/10 dark:border-white/5",
-        "dark:bg-black/40 bg-white/60",
+        "rounded-2xl border text-card-foreground shadow-sm backdrop-blur-md overflow-hidden relative transition-all duration-300",
+        glow ? "hover:box-glow border-primary/20 hover:border-primary/40" : "border-border/60 dark:border-white/10",
+        "dark:bg-card/40 bg-white/70",
         className
       )}
       {...animationProps}
@@ -17,9 +17,9 @@ const GlassCard = React.forwardRef(({ className, children, animationProps, glow 
     >
       {/* Subtle background gradient noise or glow effect inside card */}
       {glow && (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none opacity-50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none opacity-40" />
       )}
-      <div className="relative z-10 p-6 h-full flex flex-col">
+      <div className="relative z-10 p-5 md:p-8 h-full flex flex-col">
           {children}
       </div>
     </motion.div>

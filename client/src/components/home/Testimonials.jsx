@@ -32,29 +32,29 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section className="py-24 relative overflow-hidden">
-      <div className="container px-4 mx-auto relative z-10">
+    <section className="py-16 md:py-24 relative overflow-hidden">
+      <div className="container px-5 mx-auto relative z-10">
         
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">Trusted by thousands</h2>
-          <p className="text-muted-foreground text-lg">Real stories from the frontlines of rural logistics.</p>
+        <div className="text-center mb-10 md:mb-16">
+          <h2 className="text-[28px] sm:text-4xl md:text-5xl font-bold mb-3 md:mb-6">Trusted by thousands</h2>
+          <p className="text-muted-foreground text-[16px] md:text-lg leading-relaxed">Real stories from the frontlines of rural logistics.</p>
         </div>
 
         {/* CSS Carousel container hiding scrollbar */}
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-12 pt-4 px-4 -mx-4 hide-scrollbar cursor-grab active:cursor-grabbing">
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 pb-8 pt-2 px-5 -mx-5 hide-scrollbar cursor-grab active:cursor-grabbing">
           {testimonials.map((test, i) => (
-             <div key={i} className="min-w-[300px] md:min-w-[400px] snap-center shrink-0">
-               <GlassCard className="h-full">
-                 <Quote className="w-10 h-10 text-primary/20 absolute top-4 right-4" />
-                 <div className="flex gap-1 mb-4">
+             <div key={i} className="min-w-[270px] sm:min-w-[320px] md:min-w-[380px] snap-center shrink-0">
+               <GlassCard className="h-full p-5 md:p-6 rounded-2xl">
+                 <Quote className="w-8 h-8 text-primary/20 absolute top-4 right-4" />
+                 <div className="flex gap-1 mb-3">
                    {[...Array(5)].map((_, idx) => (
-                     <Star key={idx} className={`w-4 h-4 ${idx < test.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-600"}`} />
+                     <Star key={idx} className={`w-3.5 h-3.5 ${idx < test.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-600"}`} />
                    ))}
                  </div>
-                 <p className="text-foreground/90 text-lg mb-6 leading-relaxed relative z-10">"{test.text}"</p>
+                 <p className="text-foreground/90 text-sm sm:text-base md:text-lg mb-4 leading-relaxed relative z-10">"{test.text}"</p>
                  <div className="mt-auto">
-                   <h4 className="font-bold">{test.name}</h4>
-                   <p className="text-sm text-primary">{test.role}</p>
+                   <h4 className="font-bold text-[16px] md:text-lg text-foreground">{test.name}</h4>
+                   <p className="text-xs md:text-sm text-primary font-medium">{test.role}</p>
                  </div>
                </GlassCard>
              </div>

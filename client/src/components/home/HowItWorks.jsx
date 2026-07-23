@@ -27,42 +27,42 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-24 relative bg-black/20">
-      <div className="container px-4 mx-auto">
-        <div className="text-center mb-20 max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">How it works</h2>
-          <p className="text-muted-foreground text-lg">A seamless pipeline connecting urban logistics networks to rural handoffs.</p>
+    <section id="how-it-works" className="py-16 md:py-24 relative bg-black/20">
+      <div className="container px-5 mx-auto">
+        <div className="text-center mb-10 md:mb-16 max-w-2xl mx-auto">
+          <h2 className="text-[28px] sm:text-4xl md:text-5xl font-bold mb-3 md:mb-6">How it works</h2>
+          <p className="text-muted-foreground text-[16px] md:text-lg leading-relaxed">A seamless pipeline connecting urban logistics networks to rural handoffs.</p>
         </div>
 
         <div className="relative max-w-5xl mx-auto">
           {/* Connector Line (Desktop) */}
-          <div className="hidden md:block absolute top-[45px] left-[10%] right-[10%] h-[2px] bg-white/10 z-0">
+          <div className="hidden md:block absolute top-[24px] left-[10%] right-[10%] h-[2px] bg-white/10 z-0">
             <motion.div 
               initial={{ scaleX: 0, transformOrigin: "left" }}
               whileInView={{ scaleX: 1 }}
               viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
+              transition={{ duration: 1.2, ease: "easeInOut" }}
               className="w-full h-full bg-gradient-to-r from-primary to-accent"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 relative z-10">
             {steps.map((step, i) => (
               <motion.div 
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 15 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: i * 0.3, duration: 0.6 }}
-                className="flex flex-col items-center text-center"
+                viewport={{ once: true, margin: "-30px" }}
+                transition={{ delay: i * 0.1, duration: 0.3 }}
+                className="flex flex-col items-center text-center p-5 md:p-4 rounded-2xl glass-dark border border-white/10 md:border-transparent"
               >
-                <div className="w-24 h-24 rounded-full glass border-2 border-primary/30 flex items-center justify-center bg-background/80 mb-6 relative group shadow-lg shadow-black/50">
-                  <div className="absolute inset-0 rounded-full bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
+                <div className="w-12 h-12 rounded-full glass border border-primary/30 flex items-center justify-center bg-background/80 mb-4 relative group shadow-sm">
+                  <div className="absolute inset-0 rounded-full bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity blur-sm" />
                   <div className="text-foreground group-hover:text-primary transition-colors relative z-10">
                     {step.icon}
                   </div>
                 </div>
-                <h4 className="text-xl font-bold mb-3">{step.title}</h4>
+                <h4 className="text-[18px] md:text-xl font-bold mb-2 text-foreground">{step.title}</h4>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   {step.desc}
                 </p>
