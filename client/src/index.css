@@ -4,78 +4,47 @@
 
 @layer base {
   :root {
-    --background: 220 33% 98%;
-    --foreground: 224 71% 4%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
-
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-
-    --accent: 262.1 83.3% 57.8%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 221.2 83.2% 53.3%;
-
-    --radius: 0.75rem;
-  }
-
-  .dark {
-    --background: 224 71% 4%;
+    --background: 232 50% 5%;
     --foreground: 210 40% 98%;
 
-    --card: 224 71% 6%;
+    --card: 232 40% 8%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 224 71% 6%;
+    --popover: 232 40% 8%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 221.2 83.2% 53.3%;
+    --primary: 221 83% 53%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 217.2 32.6% 12%;
+    --secondary: 230 30% 15%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 12%;
+    --muted: 230 20% 18%;
     --muted-foreground: 215 20.2% 65.1%;
 
     --accent: 262.1 83.3% 57.8%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 359 84% 44%;
-    --destructive-foreground: 210 40% 98%;
+    --border: 230 20% 16%;
+    --input: 230 20% 16%;
+    --ring: 221 83% 53%;
 
-    --border: 217.2 32.6% 12%;
-    --input: 217.2 32.6% 12%;
-    --ring: 221.2 83.2% 53.3%;
+    --radius: 1rem;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-white/10;
   }
   html, body {
     overflow-x: hidden;
     max-width: 100vw;
+    background-color: #050816;
+    color: #f8fafc;
   }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/30;
+    @apply bg-[#050816] text-slate-100 antialiased selection:bg-blue-600/30 selection:text-blue-200 font-sans;
   }
   
   html {
@@ -84,26 +53,62 @@
 }
 
 @layer utilities {
-  .glass {
-    @apply bg-white/70 dark:bg-card/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.06)];
-  }
-  
-  .glass-dark {
-    @apply bg-card/60 backdrop-blur-xl border border-white/10 dark:border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.25)];
-  }
-  
-  .text-glow {
-    text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-  }
-  
-  .box-glow {
-    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2);
-  }
-  .box-glow:hover {
-    box-shadow: 0 6px 28px rgba(59, 130, 246, 0.35);
+  .glass-card {
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
   }
 
-  /* Hide scrollbar but keep scroll functionality */
+  .glass-card-hover {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .glass-card-hover:hover {
+    background: rgba(30, 41, 59, 0.55);
+    border-color: rgba(56, 189, 248, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(37, 99, 235, 0.15);
+  }
+
+  .glass-nav {
+    background: rgba(5, 8, 22, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  
+  .text-gradient {
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-gradient-blue {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-gradient-vibrant {
+    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .grid-pattern {
+    background-size: 40px 40px;
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  }
+
+  .dot-pattern {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Hide scrollbar */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -112,3 +117,4 @@
     scrollbar-width: none;
   }
 }
+

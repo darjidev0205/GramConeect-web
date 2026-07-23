@@ -19,9 +19,15 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
+        darkbg: "#050816",
+        brandBlue: "#2563EB",
+        brandPurple: "#7C3AED",
+        brandCyan: "#38BDF8",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -55,12 +61,10 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        neon: {
-          green: "#00FF94",
-          cyan: "#00E5FF",
-        }
       },
       borderRadius: {
+        '3xl': '1.75rem',
+        '4xl': '2.25rem',
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
@@ -74,27 +78,28 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "blob": {
-          "0%": {
-            transform: "translate(0px, 0px) scale(1)"
-          },
-          "33%": {
-            transform: "translate(30px, -50px) scale(1.1)"
-          },
-          "66%": {
-            transform: "translate(-20px, 20px) scale(0.9)"
-          },
-          "100%": {
-            transform: "translate(0px, 0px) scale(1)"
-          }
+        "float": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "0.4", transform: "scale(1)" },
+          "50%": { opacity: "0.8", transform: "scale(1.08)" },
+        },
+        "marquee": {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-50%)" },
         }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "blob": "blob 7s infinite"
+        "float": "float 6s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 4s ease-in-out infinite",
+        "marquee": "marquee 35s linear infinite",
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
 }
+

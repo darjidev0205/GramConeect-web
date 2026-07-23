@@ -1,77 +1,152 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Star, Quote } from 'lucide-react';
-import { GlassCard } from '../ui/glass-card';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Quote, Star, MapPin } from 'lucide-react';
 
-const testimonials = [
-  {
-    name: "Sunita Devi",
-    role: "Villager, Rajasthan",
-    text: "Before GramConnect, I had to travel 15km to the nearest town to pick up my packages. Now, the local agent brings my seeds directly to my farm.",
-    rating: 5
-  },
-  {
-    name: "Rajesh Patil",
-    role: "Delivery Partner, Maharashtra",
-    text: "This app gave me a new source of income. I know everyone in my village, so finding homes without addresses is trivial for me, but impossible for Amazon.",
-    rating: 5
-  },
-  {
-    name: "Amit Sharma",
-    role: "Hub Manager, UP",
-    text: "The sorting logic is incredible. We receive bulk packages and the app splits them perfectly into village nodal routes.",
-    rating: 4
-  },
-  {
-    name: "Meena Kumari",
-    role: "Villager, Bihar",
-    text: "I finally ordered a smartphone online. The voice assistant features on the delivery app helped the agent coordinate the drop off perfectly.",
-    rating: 5
-  }
-];
+export const Testimonials = () => {
+  const stories = [
+    {
+      id: 1,
+      name: 'Sunita Devi',
+      role: 'GramConnect Delivery Partner',
+      village: 'Rampur, Uttar Pradesh',
+      quote: 'Becoming a GramConnect agent tripled my monthly family income. Now I deliver essentials to over 40 families in my village every day with full confidence.',
+      image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+      rating: 5,
+    },
+    {
+      id: 2,
+      name: 'Ramesh Patel',
+      role: 'Organic Farmer & Resident',
+      village: 'Koppal, Karnataka',
+      quote: 'Before GramConnect, getting specialized seeds or electronics took a full day trip to the city. Today, parcels reach my farm doorstep in under 24 hours.',
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+      rating: 5,
+    },
+    {
+      id: 3,
+      name: 'Priya Sharma',
+      role: 'Local Pharmacy Owner',
+      village: 'Burdwan, West Bengal',
+      quote: 'Temperature-sensitive medicines reach our village health hub without any breakdown in cold storage. GramConnect is literally saving lives here.',
+      image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
+      rating: 5,
+    },
+  ];
 
-export function Testimonials() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextStory = () => {
+    setCurrentIndex((prev) => (prev + 1) % stories.length);
+  };
+
+  const prevStory = () => {
+    setCurrentIndex((prev) => (prev - 1 + stories.length) % stories.length);
+  };
+
+  const current = stories[currentIndex];
+
   return (
-    <section className="py-16 md:py-24 relative overflow-hidden">
-      <div className="container px-5 mx-auto relative z-10">
+    <section id="impact" className="py-32 bg-[#050816] relative overflow-hidden border-t border-white/5">
+      {/* Background Soft Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-purple-600/10 rounded-full blur-[160px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        <div className="text-center mb-10 md:mb-16">
-          <h2 className="text-[28px] sm:text-4xl md:text-5xl font-bold mb-3 md:mb-6">Trusted by thousands</h2>
-          <p className="text-muted-foreground text-[16px] md:text-lg leading-relaxed">Real stories from the frontlines of rural logistics.</p>
+        {/* Header */}
+        <div className="flex flex-col items-center text-center mb-16">
+          <span className="text-xs uppercase font-semibold tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3.5 py-1 rounded-full mb-4">
+            Voices of Rural India
+          </span>
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight font-display max-w-3xl">
+            Empowering Real People Across Every Pincode
+          </h2>
         </div>
 
-        {/* CSS Carousel container hiding scrollbar */}
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 pb-8 pt-2 px-5 -mx-5 hide-scrollbar cursor-grab active:cursor-grabbing">
-          {testimonials.map((test, i) => (
-             <div key={i} className="min-w-[270px] sm:min-w-[320px] md:min-w-[380px] snap-center shrink-0">
-               <GlassCard className="h-full p-5 md:p-6 rounded-2xl">
-                 <Quote className="w-8 h-8 text-primary/20 absolute top-4 right-4" />
-                 <div className="flex gap-1 mb-3">
-                   {[...Array(5)].map((_, idx) => (
-                     <Star key={idx} className={`w-3.5 h-3.5 ${idx < test.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-600"}`} />
-                   ))}
-                 </div>
-                 <p className="text-foreground/90 text-sm sm:text-base md:text-lg mb-4 leading-relaxed relative z-10">"{test.text}"</p>
-                 <div className="mt-auto">
-                   <h4 className="font-bold text-[16px] md:text-lg text-foreground">{test.name}</h4>
-                   <p className="text-xs md:text-sm text-primary font-medium">{test.role}</p>
-                 </div>
-               </GlassCard>
-             </div>
-          ))}
+        {/* Testimonial Showcase Box */}
+        <div className="max-w-4xl mx-auto relative">
+          
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={current.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+              className="glass-card rounded-3xl p-8 sm:p-12 border border-white/10 relative overflow-hidden bg-[#090d24]/90 shadow-2xl flex flex-col md:flex-row items-center gap-8"
+            >
+              <Quote className="absolute top-6 right-8 w-16 h-16 text-white/5 pointer-events-none" />
+
+              {/* Left Profile Avatar Image */}
+              <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden border-2 border-cyan-400/50 p-1 flex-shrink-0 shadow-xl shadow-cyan-500/20">
+                <img 
+                  src={current.image} 
+                  alt={current.name}
+                  className="w-full h-full object-cover rounded-full" 
+                />
+              </div>
+
+              {/* Right Content */}
+              <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                
+                {/* Rating Stars */}
+                <div className="flex items-center gap-1 mb-4">
+                  {[...Array(current.rating)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+
+                {/* Quote Text */}
+                <p className="text-lg sm:text-xl text-slate-200 font-medium leading-relaxed mb-6 font-display">
+                  "{current.quote}"
+                </p>
+
+                {/* Author Info */}
+                <div>
+                  <h4 className="text-base font-bold text-white tracking-tight">{current.name}</h4>
+                  <div className="text-xs text-cyan-400 font-semibold mt-0.5">{current.role}</div>
+                  <div className="text-xs text-slate-400 flex items-center gap-1 mt-1 justify-center md:justify-start">
+                    <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                    {current.village}
+                  </div>
+                </div>
+
+              </div>
+
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Navigation Controls */}
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <button
+              onClick={prevStory}
+              className="p-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors"
+              aria-label="Previous Testimonial"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              {stories.map((s, idx) => (
+                <div
+                  key={s.id}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`h-2 rounded-full cursor-pointer transition-all ${
+                    currentIndex === idx ? 'w-8 bg-cyan-400' : 'w-2 bg-white/20'
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={nextStory}
+              className="p-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors"
+              aria-label="Next Testimonial"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
         </div>
+
       </div>
-      
-      {/* Scrollbar hide injected directly for convenience */}
-      <style>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </section>
   );
-}
+};

@@ -1,128 +1,87 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Truck, Shield, ChevronDown } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Home, Bike, Shield, Check } from 'lucide-react';
 
 const roles = [
-  { id: 'user', label: 'Villager / User', icon: Home, desc: 'Customer placing delivery requests' },
-  { id: 'agent', label: 'Delivery Partner', icon: Truck, desc: 'Local agent fulfilling transits' },
-  { id: 'admin', label: 'Admin Manager', icon: Shield, desc: 'System management & analytics' }
+  { 
+    id: 'user', 
+    label: 'Villager', 
+    desc: 'Receive doorstep deliveries in your village', 
+    icon: Home,
+    badge: 'Customer'
+  },
+  { 
+    id: 'agent', 
+    label: 'Delivery Partner', 
+    desc: 'Deliver parcels locally and earn daily payout', 
+    icon: Bike,
+    badge: 'Partner'
+  },
+  { 
+    id: 'admin', 
+    label: 'Platform Admin', 
+    desc: 'Manage logistics hubs & network routes', 
+    icon: Shield,
+    badge: 'Management'
+  }
 ];
 
 export function RoleSelector({ value, onChange, disabled }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef(null);
-
-  const selectedRole = roles.find(r => r.id === value) || roles[0];
-  const SelectedIcon = selectedRole.icon;
-
-  // Keyboard navigation support
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, []);
-
-  const handleKeyDown = (e) => {
-    if (disabled) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      if (!isOpen) {
-        setIsOpen(true);
-      } else {
-        onChange(roles[activeIndex].id);
-        setIsOpen(false);
-      }
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (!isOpen) {
-        setIsOpen(true);
-      } else {
-        setActiveIndex(prev => (prev + 1) % roles.length);
-      }
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (!isOpen) {
-        setIsOpen(true);
-      } else {
-        setActiveIndex(prev => (prev - 1 + roles.length) % roles.length);
-      }
-    } else if (e.key === 'Escape') {
-      setIsOpen(false);
-    }
-  };
-
   return (
-    <div className="relative w-full text-left" ref={containerRef} onKeyDown={handleKeyDown}>
-      <label className="text-xs font-semibold text-muted-foreground block mb-2">Select Your Role</label>
-      
-      <button
-        type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className="w-full flex items-center justify-between bg-neutral-900 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-neutral-800 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-            <SelectedIcon className="w-4 h-4" />
-          </div>
-          <span className="font-semibold text-white">{selectedRole.label}</span>
-        </div>
-        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+    <div className="w-full text-left space-y-3">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
+          Select Your Network Role
+        </label>
+        <span className="text-[10px] text-blue-400 font-mono">No Dropdown • Direct Select</span>
+      </div>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.ul
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 4 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.15 }}
-            role="listbox"
-            className="absolute z-50 w-full bg-neutral-900/95 backdrop-blur-xl border border-white/10 rounded-xl p-1.5 shadow-2xl overflow-hidden mt-1 focus:outline-none"
-          >
-            {roles.map((roleItem, index) => {
-              const Icon = roleItem.icon;
-              const isSelected = roleItem.id === value;
-              const isFocused = index === activeIndex;
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {roles.map((roleItem) => {
+          const Icon = roleItem.icon;
+          const isSelected = roleItem.id === value;
 
-              return (
-                <li
-                  key={roleItem.id}
-                  role="option"
-                  aria-selected={isSelected}
-                  onClick={() => {
-                    onChange(roleItem.id);
-                    setIsOpen(false);
-                  }}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all ${
-                    isSelected ? 'bg-primary text-black font-semibold' : 
-                    isFocused ? 'bg-white/5 text-white' : 'text-muted-foreground hover:text-white'
-                  }`}
+          return (
+            <motion.div
+              key={roleItem.id}
+              whileHover={{ y: disabled ? 0 : -2 }}
+              whileTap={{ scale: disabled ? 1 : 0.98 }}
+              onClick={() => !disabled && onChange(roleItem.id)}
+              className={`relative p-4 rounded-2xl cursor-pointer border transition-all duration-300 flex flex-col justify-between ${
+                isSelected 
+                  ? 'bg-gradient-to-b from-blue-600/20 to-indigo-600/20 border-cyan-400 shadow-lg shadow-blue-600/20 text-white' 
+                  : 'bg-white/[0.03] border-white/10 hover:border-white/20 text-slate-400 hover:text-slate-200'
+              } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {/* Selected Checkmark Badge */}
+              {isSelected && (
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute top-3 right-3 w-5 h-5 rounded-full bg-cyan-400 flex items-center justify-center text-[#050816]"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-black/10 text-black' : 'bg-white/5 text-primary'}`}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold leading-tight">{roleItem.label}</p>
-                      <p className={`text-xxs mt-0.5 ${isSelected ? 'text-black/70' : 'text-muted-foreground'}`}>{roleItem.desc}</p>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </motion.ul>
-        )}
-      </AnimatePresence>
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </motion.div>
+              )}
+
+              <div>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-colors ${
+                  isSelected ? 'bg-cyan-400 text-[#050816]' : 'bg-white/5 text-blue-400'
+                }`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+
+                <div className="text-sm font-bold text-white tracking-tight">{roleItem.label}</div>
+                <div className="text-[11px] text-slate-400 leading-snug mt-1">{roleItem.desc}</div>
+              </div>
+
+              <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between">
+                <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400">{roleItem.badge}</span>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 }

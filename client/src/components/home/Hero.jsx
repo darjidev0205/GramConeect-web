@@ -1,107 +1,228 @@
 import React from 'react';
-import { Button } from "../ui/button";
 import { motion } from 'framer-motion';
-import { ArrowRight, MapPinOff, Truck, Navigation } from 'lucide-react';
+import { ArrowRight, MapPin, Navigation, ShieldCheck, Zap, Radio, CheckCircle2 } from 'lucide-react';
 
-export function Hero({ onOpenAuth }) {
+export const Hero = ({ onOpenAuth }) => {
   return (
-    <section id="home" className="relative pt-24 pb-16 md:pt-44 md:pb-28 overflow-hidden w-full flex items-center min-h-[85vh]">
-      {/* Background Animated Blobs */}
-      <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[280px] sm:w-[450px] h-[280px] sm:h-[450px] bg-primary/20 rounded-full blur-[80px] md:blur-[100px] animate-blob mix-blend-screen opacity-40 dark:opacity-25 pointer-events-none"></div>
-      <div className="absolute top-1/3 right-1/4 translate-x-1/4 -translate-y-1/4 w-[240px] sm:w-[380px] h-[240px] sm:h-[380px] bg-accent/20 rounded-full blur-[80px] md:blur-[100px] animate-blob animation-delay-2000 mix-blend-screen opacity-40 dark:opacity-25 pointer-events-none"></div>
+    <section className="relative min-h-screen pt-32 pb-20 overflow-hidden bg-[#050816] flex items-center">
+      {/* Dynamic Background Glows & Grid */}
+      <div className="absolute inset-0 grid-pattern opacity-40 pointer-events-none" />
       
-      <div className="container px-5 mx-auto relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-gradient-to-tr from-blue-600/20 via-indigo-600/15 to-cyan-500/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/3 right-10 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
-          {/* Text Content */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="flex-1 text-center lg:text-left w-full"
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-primary font-medium text-[12px] sm:text-sm mb-4 md:mb-6 border border-primary/20 shadow-sm shadow-primary/10">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+          {/* Left Hero Content */}
+          <div className="lg:col-span-7 flex flex-col items-start">
+            
+            {/* Funding Announcement Pill */}
+            <motion.div 
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md mb-8 hover:border-blue-500/30 transition-colors"
+            >
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-xs font-medium text-slate-300">
+                GramConnect raises $50M Series A to digitize Bharat's Last Mile
               </span>
-              Smart Rural Delivery Network
-            </div>
-            
-            <h1 className="text-[34px] sm:text-[40px] md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-4 md:mb-6 leading-[1.1]">
-              Delivering to Every Village, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent block sm:inline">No Address Needed.</span>
-            </h1>
-            
-            <p className="text-[16px] md:text-xl text-muted-foreground mb-6 md:mb-10 max-w-2xl mx-auto lg:mx-0 leading-[1.6]">
-              GramConnect solves last-mile delivery in rural areas. 
-              We connect villagers with local delivery agents to ensure packages reach places major e-commerce platforms can't.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 w-full sm:w-auto">
-              <Button 
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+            </motion.div>
+
+            {/* Massive Editorial Headline */}
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.08] mb-6 font-display"
+            >
+              Delivering Every Village.{' '}
+              <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-400 bg-clip-text text-transparent block mt-2">
+                Not Every Address.
+              </span>
+            </motion.h1>
+
+            {/* Paragraph Subtitle */}
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="text-lg sm:text-xl text-slate-400 max-w-2xl font-normal leading-relaxed mb-10"
+            >
+              India’s first hyper-localized rural distribution network. We bridge tier-1 fulfillment centers to deep village clusters using smart offline technology, micro-hubs, and local village entrepreneurs.
+            </motion.p>
+
+            {/* Call to Actions */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto"
+            >
+              <button
                 onClick={() => onOpenAuth('user')}
-                size="lg" 
-                className="rounded-2xl w-full sm:w-auto text-base h-[52px] px-7 bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_4px_20px_rgba(59,130,246,0.3)] hover:shadow-[0_4px_25px_rgba(59,130,246,0.5)] active:scale-[0.98] transition-all duration-200"
+                className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 text-white font-semibold text-sm shadow-xl shadow-blue-600/30 hover:shadow-blue-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
               >
-                Get Started <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button 
+                Track Your Parcel
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              <button
                 onClick={() => onOpenAuth('agent')}
-                size="lg" 
-                variant="outline" 
-                className="rounded-2xl w-full sm:w-auto text-base h-[52px] px-7 border-border/80 dark:border-white/20 bg-background/50 dark:bg-white/5 backdrop-blur-md hover:bg-accent/50 dark:hover:bg-white/10 active:scale-[0.98] transition-all duration-200"
+                className="px-8 py-4 rounded-full bg-white/[0.05] hover:bg-white/[0.08] text-white font-semibold text-sm border border-white/10 backdrop-blur-md hover:border-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
-                Become a Partner
-              </Button>
-            </div>
-          </motion.div>
+                Become Village Delivery Partner
+              </button>
+            </motion.div>
 
-          {/* Visual Illustration Elements - Moved below CTA on mobile, reduced size by ~30% */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.35, delay: 0.1 }}
-            className="flex-1 relative w-full max-w-[260px] sm:max-w-[340px] lg:max-w-none mx-auto h-[260px] sm:h-[320px] lg:h-[400px] mt-4 lg:mt-0 flex items-center justify-center"
-          >
-            {/* Main Center Sphere representing Hub */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-full bg-gradient-to-br from-primary/80 to-accent/80 backdrop-blur-3xl shadow-[0_0_40px_rgba(59,130,246,0.3)] flex items-center justify-center z-20">
-              <Truck className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 text-primary-foreground drop-shadow-md" />
-            </div>
-
-            {/* Inner Orbiting Delivery Points */}
+            {/* Trust Metrics Bar */}
             <motion.div 
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] lg:w-[340px] lg:h-[340px] rounded-full border border-dashed border-primary/30 z-10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="mt-14 pt-8 border-t border-white/10 grid grid-cols-3 gap-6 w-full max-w-lg"
             >
-              <div className="absolute -top-4 sm:-top-5 left-1/2 -translate-x-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-full glass flex items-center justify-center shadow-md shadow-primary/20">
-                <MapPinOff className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <div>
+                <div className="text-2xl font-bold text-white font-display">500+</div>
+                <div className="text-xs text-slate-400 mt-0.5">Villages Connected</div>
               </div>
-              <div className="absolute -bottom-4 sm:-bottom-5 left-1/2 -translate-x-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-full glass flex items-center justify-center shadow-md shadow-accent/20">
-               <Navigation className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+              <div>
+                <div className="text-2xl font-bold text-white font-display">2,500+</div>
+                <div className="text-xs text-slate-400 mt-0.5">Village Delivery Agents</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-white font-display">99.8%</div>
+                <div className="text-xs text-slate-400 mt-0.5">On-Time Completion</div>
               </div>
             </motion.div>
+
+          </div>
+
+          {/* Right Visual Focus: Cinematic 3D Isometric Logistics Network & Floating App */}
+          <div className="lg:col-span-5 relative flex items-center justify-center">
             
-            {/* Outer Orbiting Path */}
+            {/* Outer Decorative Halo */}
+            <div className="absolute w-[460px] h-[460px] rounded-full border border-blue-500/20 animate-pulse-glow pointer-events-none" />
+            <div className="absolute w-[360px] h-[360px] rounded-full border border-indigo-500/15 pointer-events-none" />
+
+            {/* Main Interactive Logistics Card Mockup */}
             <motion.div 
-              animate={{ rotate: -360 }}
-              transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[255px] h-[255px] sm:w-[330px] sm:h-[330px] lg:w-[440px] lg:h-[440px] rounded-full border border-primary/10 z-0"
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.2 }}
+              className="relative w-full max-w-md glass-card rounded-3xl p-6 border border-white/15 bg-[#090d24]/80 backdrop-blur-2xl shadow-2xl shadow-blue-950/80"
             >
-              <div className="absolute top-1/4 -right-2 sm:-right-3 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary/20 backdrop-blur-md flex items-center justify-center">
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-primary animate-pulse" />
+              {/* Card Header Status */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                    Live Dispatch Routing
+                  </span>
+                </div>
+                <div className="text-[11px] font-mono text-slate-400 bg-white/5 px-2.5 py-1 rounded-md border border-white/10">
+                  HUB-IN-8892
+                </div>
               </div>
-              <div className="absolute bottom-1/4 -left-2 sm:-left-3 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-accent/20 backdrop-blur-md flex items-center justify-center">
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-accent animate-pulse" />
+
+              {/* Simulated Map & Route Grid Visual */}
+              <div className="relative h-64 w-full rounded-2xl overflow-hidden bg-[#040612] border border-white/10 p-4 flex flex-col justify-between">
+                <div className="absolute inset-0 dot-pattern opacity-60" />
+                
+                {/* SVG Live Animated Route Lines */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                  <defs>
+                    <linearGradient id="routeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
+                      <stop offset="50%" stopColor="#6366f1" stopOpacity="0.9" />
+                      <stop offset="100%" stopColor="#34d399" stopOpacity="1" />
+                    </linearGradient>
+                  </defs>
+                  
+                  {/* Arc Paths */}
+                  <path 
+                    d="M 40 50 Q 150 20 280 100 T 360 210" 
+                    fill="none" 
+                    stroke="url(#routeGrad)" 
+                    strokeWidth="3" 
+                    strokeDasharray="6 6"
+                    className="animate-pulse"
+                  />
+                  <path 
+                    d="M 40 50 Q 200 140 360 210" 
+                    fill="none" 
+                    stroke="url(#routeGrad)" 
+                    strokeWidth="2"
+                    strokeOpacity="0.4"
+                  />
+                </svg>
+
+                {/* Map Nodes */}
+                {/* Node 1: City Warehouse */}
+                <div className="relative z-10 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-600/30 border border-blue-500/50 flex items-center justify-center text-blue-400 shadow-md">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white">Metro Central Hub</div>
+                    <div className="text-[10px] text-slate-400">Dispatch Time: 05:30 AM</div>
+                  </div>
+                </div>
+
+                {/* Node 2: Regional Hub */}
+                <div className="relative z-10 self-center flex items-center gap-3 bg-white/5 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10">
+                  <Radio className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
+                  <span className="text-[11px] font-medium text-slate-200">Transit: Taluka Hub (Zone B)</span>
+                </div>
+
+                {/* Node 3: Village Agent */}
+                <div className="relative z-10 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 shadow-md">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white">Rampur Village Agent</div>
+                      <div className="text-[10px] text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Last 1.2 KM via EV Bike
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-slate-300 font-mono bg-emerald-500/10 text-emerald-300 px-2 py-1 rounded">
+                    ETA 12m
+                  </span>
+                </div>
               </div>
+
+              {/* Floating Live Tracking Card Overlay */}
+              <motion.div 
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="mt-4 p-3.5 rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-xs">
+                    RA
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white">Ramesh Patel (Agent)</div>
+                    <div className="text-[10px] text-slate-400">Verified Local Logistics Partner</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-slate-400">OTP Auth</div>
+                  <div className="text-xs font-bold text-cyan-400 font-mono">#9842</div>
+                </div>
+              </motion.div>
+
             </motion.div>
-          </motion.div>
-          
+
+          </div>
+
         </div>
       </div>
-      
-      {/* Soft gradient divider at bottom */}
-      <div className="absolute bottom-0 inset-x-0 h-24 sm:h-32 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none" />
     </section>
   );
-}
+};
