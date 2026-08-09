@@ -4,6 +4,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { CustomSelect } from '../components/ui/custom-select';
+import { GramConnectLogo } from '../components/branding/GramConnectLogo';
 import { 
   Users, Truck, MapPin, Package, Settings, LogOut, ArrowUpRight, Menu, X,
   Plus, Edit2, Trash2, ShieldAlert, CheckCircle2, DollarSign, Activity, 
@@ -560,13 +561,8 @@ const AdminDashboard = () => {
             >
               <Menu className="w-4 h-4" />
             </button>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-              <Settings className="w-5 h-5 text-black" />
-            </div>
-            <span className="text-xl font-black tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
-              GRAMCONNECT
-            </span>
-            <span className="hidden md:inline-block px-2.5 py-0.5 rounded-full text-xs font-mono bg-white/5 border border-white/10 text-muted-foreground">
+            <GramConnectLogo variant="full" size="md" />
+            <span className="hidden md:inline-block px-2.5 py-0.5 rounded-full text-xs font-mono bg-white/5 border border-white/10 text-muted-foreground ml-2">
               Enterprise Dashboard
             </span>
           </div>

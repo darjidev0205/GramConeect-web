@@ -15,6 +15,7 @@ import { RoleSettings } from '../components/auth/RoleSettings';
 import { SupportCenter } from '../components/support/SupportCenter';
 import { io } from 'socket.io-client';
 import api, { API_BASE_URL, getErrorMessage } from '../services/api';
+import { GramConnectLogo } from '../components/branding/GramConnectLogo';
 
 const UserDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -363,14 +364,9 @@ const UserDashboard = () => {
       <nav className="sticky top-0 z-50 bg-black/90 glass border-b border-white/5 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-              <Navigation className="w-5 h-5 text-black" />
-            </div>
-            <span className="text-xl font-bold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
-              GRAMCONNECT
-            </span>
-            <span className="hidden md:inline-block px-2.5 py-0.5 rounded-full text-xs font-mono bg-white/5 border border-white/10 text-muted-foreground">
-              Villager Portal
+            <GramConnectLogo variant="full" size="md" />
+            <span className="hidden md:inline-block px-2.5 py-0.5 rounded-full text-xs font-mono bg-white/5 border border-white/10 text-muted-foreground ml-2">
+              Customer Portal
             </span>
           </div>
 

@@ -8,6 +8,7 @@ import AgentDashboard from './pages/AgentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { ThemeProvider } from './components/theme-provider';
+import { GramConnectSplash } from './components/branding/GramConnectSplash';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -55,6 +56,7 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <GramConnectSplash />
       <AuthProvider>
         <Router>
           <AppRoutes />

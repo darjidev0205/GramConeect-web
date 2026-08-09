@@ -7,6 +7,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { RoleSelector } from './RoleSelector';
 import api, { getErrorMessage } from '../../services/api';
+import { GramConnectLogo } from '../branding/GramConnectLogo';
 
 const steps = {
   WELCOME: 'WELCOME',
@@ -409,11 +410,7 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
                   <ArrowLeft className="w-4 h-4" />
                 </button>
               ) : (
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 p-[1px]">
-                  <div className="w-full h-full bg-[#050816] rounded-[11px] flex items-center justify-center font-bold text-xs text-cyan-400">
-                    G
-                  </div>
-                </div>
+                <GramConnectLogo variant="mark" size="sm" />
               )}
 
               <div>
