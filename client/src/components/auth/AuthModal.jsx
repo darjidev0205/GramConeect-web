@@ -77,6 +77,10 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
   // Authenticated user payload before success transition
   const [pendingAuthUser, setPendingAuthUser] = useState(null);
 
+  // OTP Verification Sequence States
+  const [authSequenceStep, setAuthSequenceStep] = useState(0); // 0: idle, 1: morphing dots, 2: light sweep, 3: checkmark badge, 4: success text
+  const [otpError, setOtpError] = useState(false);
+
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const modalRef = useRef(null);
@@ -98,6 +102,8 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
       setTermsAccepted(false);
       setResendCount(0);
       setPendingAuthUser(null);
+      setAuthSequenceStep(0);
+      setOtpError(false);
     }
   }, [show, defaultRole]);
 
@@ -125,6 +131,8 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
     setError('');
     setSuccess('');
     setFieldErrors({});
+    setAuthSequenceStep(0);
+    setOtpError(false);
   };
 
   const getTarget = () => {
@@ -217,37 +225,66 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
     }, 2200);
   };
 
-  const handleVerifyOTP = async () => {
+  const handleVerifyOTP = async (codeOverride) => {
     const target = getTarget();
+    const verifyCode = codeOverride || otp;
     setError('');
     setSuccess('');
+    setOtpError(false);
 
-    if (otp.length !== 6) {
+    if (!verifyCode || verifyCode.length !== 6) {
       setFieldErrors({ otp: 'Please enter the complete 6-digit code.' });
+      setOtpError(true);
       return;
     }
 
     setLoading(true);
     try {
-      const response = await api.post('/api/otp/verify', { target, otp, role });
+      const response = await api.post('/api/otp/verify', { target, otp: verifyCode, role });
       const data = response.data;
 
-      if (data.exists) {
-        triggerSuccessRedirect(data.user, data.token, data.refreshToken);
-      } else {
-        if (authMethod === 'email') {
-          setRegEmail(target);
-          setRegPhone('');
+      // 1. Morph OTP digits to 6 security dots (0.0s - 0.4s)
+      setAuthSequenceStep(1);
+
+      // 2. Cyan light sweep across security dots (0.4s - 1.1s)
+      setTimeout(() => {
+        setAuthSequenceStep(2);
+      }, 400);
+
+      // 3. Convergence & checkmark badge (1.1s - 1.6s)
+      setTimeout(() => {
+        setAuthSequenceStep(3);
+      }, 1100);
+
+      // 4. Connection Verified text & Progress bar 100% (1.6s - 2.2s)
+      setTimeout(() => {
+        setAuthSequenceStep(4);
+      }, 1700);
+
+      // 5. Final navigation / redirect transition (2.5s)
+      setTimeout(() => {
+        setLoading(false);
+        if (data.exists) {
+          triggerSuccessRedirect(data.user, data.token, data.refreshToken);
         } else {
-          setRegPhone(target);
-          setRegEmail('');
+          if (authMethod === 'email') {
+            setRegEmail(target);
+            setRegPhone('');
+          } else {
+            setRegPhone(target);
+            setRegEmail('');
+          }
+          goToStep(steps.REGISTER, 1);
         }
-        goToStep(steps.REGISTER, 1);
-      }
+      }, 2500);
+
     } catch (err) {
-      setError(getErrorMessage(err, 'Invalid or expired OTP code.'));
-    } finally {
       setLoading(false);
+      setAuthSequenceStep(0);
+      setOtpError(true);
+      const errMsg = getErrorMessage(err, 'Invalid or expired OTP code.');
+      setError(errMsg);
+      setFieldErrors({ otp: errMsg });
     }
   };
 
@@ -324,7 +361,7 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
     step === steps.WELCOME ? 15 :
     step === steps.METHOD ? 35 :
     step === steps.INPUT ? 55 :
-    step === steps.OTP ? 75 :
+    step === steps.OTP ? (authSequenceStep >= 4 ? 100 : 75) :
     step === steps.REGISTER || step === steps.AGENT_DETAILS ? 90 : 100;
 
   return (
@@ -653,44 +690,88 @@ export function AuthModal({ show, onClose, defaultRole = 'user' }) {
                   initial="enter" 
                   animate="center" 
                   exit="exit" 
-                  className="flex flex-col justify-between h-full space-y-6 text-center"
+                  className="flex flex-col justify-between items-center h-full text-center my-auto py-2"
                 >
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-extrabold text-white font-display mb-1.5">
-                      Verify Passcode
+                  <div className="w-full flex flex-col items-center my-auto">
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-display mb-1.5 tracking-tight transition-all duration-300">
+                      {authSequenceStep >= 4 ? (
+                        <span className="text-emerald-400 flex items-center justify-center gap-2">
+                          <ShieldCheck className="w-7 h-7 text-emerald-400" /> Connection Verified
+                        </span>
+                      ) : (
+                        "Verify Passcode"
+                      )}
                     </h2>
-                    <p className="text-xs text-slate-400 mb-6">
-                      Enter 6-digit code dispatched to <span className="text-cyan-400 font-mono font-bold">{getTarget()}</span>
+                    <p className="text-xs sm:text-sm text-slate-400 mb-6 transition-all duration-300 max-w-xs sm:max-w-sm">
+                      {authSequenceStep >= 4 ? (
+                        <span className="text-emerald-300/90 font-medium">Secure connection established</span>
+                      ) : (
+                        <>Enter 6-digit code dispatched to <span className="text-cyan-400 font-mono font-bold">{getTarget()}</span></>
+                      )}
                     </p>
 
-                    <div className="mb-6 flex flex-col items-center">
-                      <OTPInput length={6} value={otp} onChange={(val) => {
-                        setOtp(val);
-                        if (val.length === 6) setFieldError('otp', null);
-                      }} />
-                      {fieldErrors.otp && (
-                        <p className="text-red-400 text-xs mt-3 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> {fieldErrors.otp}</p>
+                    <div className="my-auto py-2 flex flex-col items-center justify-center w-full">
+                      <OTPInput 
+                        length={6} 
+                        value={otp} 
+                        disabled={loading || authSequenceStep > 0}
+                        isError={otpError}
+                        authSequenceStep={authSequenceStep}
+                        onChange={(val) => {
+                          setOtp(val);
+                          setOtpError(false);
+                          if (val.length === 6) setFieldError('otp', null);
+                        }}
+                        onAutoSubmit={(code) => {
+                          handleVerifyOTP(code);
+                        }}
+                      />
+                      {fieldErrors.otp && authSequenceStep === 0 && (
+                        <motion.p 
+                          initial={{ opacity: 0, y: -4 }} 
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-red-400 text-xs mt-3 flex items-center justify-center gap-1.5 font-medium"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> {fieldErrors.otp}
+                        </motion.p>
                       )}
                     </div>
 
-                    <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
-                      {timer > 0 ? (
-                        <span>Resend code in <span className="text-cyan-400 font-mono font-bold">00:{timer < 10 ? `0${timer}` : timer}</span></span>
-                      ) : (
-                        <button className="text-cyan-400 font-bold hover:underline flex items-center gap-1" onClick={handleResendOTP} disabled={loading}>
-                          <RotateCcw className="w-3.5 h-3.5" /> Resend OTP
-                        </button>
+                    <div className="h-6 flex items-center justify-center text-xs text-slate-400 mt-4">
+                      {authSequenceStep === 0 && (
+                        timer > 0 ? (
+                          <span>Resend code in <span className="text-cyan-400 font-mono font-bold">00:{timer < 10 ? `0${timer}` : timer}</span></span>
+                        ) : (
+                          <button className="text-cyan-400 font-bold hover:underline flex items-center gap-1 transition-all" onClick={handleResendOTP} disabled={loading}>
+                            <RotateCcw className="w-3.5 h-3.5" /> Resend OTP
+                          </button>
+                        )
                       )}
                     </div>
                   </div>
 
-                  <div className="pt-4">
+                  <div className="pt-6 w-full mt-auto">
                     <button 
-                      className="w-full py-4 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 text-white font-semibold text-sm shadow-xl shadow-blue-600/30 hover:shadow-blue-500/50 transition-all flex items-center justify-center gap-2"
-                      onClick={handleVerifyOTP}
-                      disabled={otp.length !== 6 || loading}
+                      className={`w-full py-4 rounded-full text-white font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-xl ${
+                        authSequenceStep >= 4 
+                          ? "bg-gradient-to-r from-emerald-600 to-cyan-500 shadow-emerald-500/30 scale-[1.01]" 
+                          : "bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 shadow-blue-600/30 hover:shadow-blue-500/50"
+                      }`}
+                      onClick={() => handleVerifyOTP()}
+                      disabled={otp.length !== 6 || loading || authSequenceStep > 0}
                     >
-                      {loading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : "Verify & Connect"}
+                      {authSequenceStep >= 4 ? (
+                        <span className="flex items-center gap-1.5">Connected <CheckCircle2 className="w-4 h-4" /></span>
+                      ) : authSequenceStep > 0 ? (
+                        <span className="flex items-center gap-2">
+                          <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                          Verifying...
+                        </span>
+                      ) : loading ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-white" />
+                      ) : (
+                        "Verify & Connect"
+                      )}
                     </button>
                   </div>
                 </motion.div>

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Menu, X, ChevronRight } from 'lucide-react';
 
 export const Navbar = ({ onOpenAuth }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const containerRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,6 +16,26 @@ export const Navbar = ({ onOpenAuth }) => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleMouseMove = (e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const mouseX = e.clientX - centerX;
+    const mouseY = e.clientY - centerY;
+    
+    // Max tilt range: 2 degrees
+    const rotateX = Math.max(-2, Math.min(2, (-mouseY / (rect.height / 2)) * 2));
+    const rotateY = Math.max(-2, Math.min(2, (mouseX / (rect.width / 2)) * 2));
+    
+    setTilt({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setTilt({ x: 0, y: 0 });
+  };
 
   const navLinks = [
     { name: 'Mission', href: '#mission' },
@@ -23,28 +46,81 @@ export const Navbar = ({ onOpenAuth }) => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-4 lg:px-8 pt-4 pb-2 transition-all duration-300 pointer-events-none">
+    <header className="fixed top-0 left-0 right-0 z-50 px-4 lg:px-[28px] pt-4 pb-2 transition-all duration-300 pointer-events-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         
-        {/* Logo */}
-        <a 
-          href="#" 
-          className="pointer-events-auto flex items-center gap-3 group focus:outline-none"
-        >
-          <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 p-[1px] shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-all duration-300">
-            <div className="w-full h-full bg-[#050816] rounded-[11px] flex items-center justify-center">
-              <span className="font-bold text-lg bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">G</span>
+        {/* Logo Container with Brand Name & Series A Badge */}
+        <div className="pointer-events-auto flex items-center gap-[12px] group focus:outline-none cursor-pointer">
+          <a
+            href="#"
+            ref={containerRef}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="relative inline-flex items-center justify-center cursor-pointer group/logo"
+            style={{ perspective: '1000px' }}
+          >
+            {/* Background Radial Glow Effect */}
+            <div 
+              className="absolute -inset-4 rounded-full pointer-events-none transition-opacity duration-500"
+              style={{
+                background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)',
+                opacity: isHovered ? 1 : scrolled ? 0.9 : 0.7
+              }}
+            />
+
+            {/* Glass Container */}
+            <div
+              className={`relative flex items-center justify-center p-[10px] rounded-[14px] backdrop-blur-[18px] transition-all animate-logo-float ${
+                isHovered
+                  ? 'border-[rgba(59,130,246,0.45)] bg-[rgba(255,255,255,0.05)] shadow-lg shadow-blue-500/20'
+                  : scrolled
+                  ? 'border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)]'
+                  : 'border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)]'
+              }`}
+              style={{
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                transitionDuration: '350ms',
+                transitionTimingFunction: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+                transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(${isHovered ? 1.05 : 1}) rotate(${isHovered ? 0.5 : 0}deg)`,
+              }}
+            >
+              {/* Dual Glow Layer behind logo */}
+              <div 
+                className="absolute inset-0 rounded-[14px] pointer-events-none transition-opacity duration-300"
+                style={{
+                  boxShadow: isHovered
+                    ? '0 0 18px 2px rgba(59,130,246,0.50), 0 0 18px 2px rgba(16,185,129,0.35)'
+                    : scrolled
+                    ? '0 0 18px 2px rgba(59,130,246,0.385), 0 0 18px 2px rgba(16,185,129,0.275)'
+                    : '0 0 18px 2px rgba(59,130,246,0.35), 0 0 18px 2px rgba(16,185,129,0.25)',
+                  opacity: 0.85
+                }}
+              />
+
+              {/* Logo Image */}
+              <img
+                src="/gramconnect-logo-transparent.png"
+                alt="GramConnect - Next-Gen Rural Logistics Infrastructure"
+                className="h-[36px] md:h-[40px] lg:h-[44px] w-auto object-contain select-none transition-all duration-300 filter drop-shadow-[0_0_8px_rgba(59,130,246,0.4)]"
+                style={{
+                  maxHeight: '100%',
+                }}
+              />
             </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-lg tracking-tight text-white flex items-center gap-1.5">
+          </a>
+
+          {/* Brand Name & Series A Badge with Optical Alignment */}
+          <a href="#" className="flex items-center gap-[14px] focus:outline-none">
+            <span className="font-bold text-lg md:text-xl tracking-tight text-white flex items-center font-sans">
               GramConnect
-              <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                Series A
-              </span>
             </span>
-          </div>
-        </a>
+            <span className="text-[10px] font-semibold tracking-widest uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 backdrop-blur-md shadow-sm">
+              Series A
+            </span>
+          </a>
+        </div>
 
         {/* Desktop Navigation Pills */}
         <nav className={`pointer-events-auto hidden md:flex items-center gap-1 px-4 py-1.5 rounded-full transition-all duration-300 ${
@@ -134,3 +210,4 @@ export const Navbar = ({ onOpenAuth }) => {
     </header>
   );
 };
+

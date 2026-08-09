@@ -118,3 +118,24 @@
   }
 }
 
+/* Premium Logo Animations & Utilities */
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.animate-logo-float {
+  animation: logoFloat 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-logo-float {
+    animation: none !important;
+  }
+}
+
+

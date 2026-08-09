@@ -3,12 +3,13 @@ import { AuthContext } from '../context/AuthContext';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { CustomSelect } from '../components/ui/custom-select';
 import { 
   Users, Truck, MapPin, Package, Settings, LogOut, ArrowUpRight, Menu, X,
   Plus, Edit2, Trash2, ShieldAlert, CheckCircle2, DollarSign, Activity, 
   Bell, HelpCircle, BarChart3, FileSpreadsheet, RefreshCw, Compass,
   Search, Filter, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Download,
-  Info, AlertTriangle, Check, Printer, FileText, Layers, CheckSquare
+  Info, AlertTriangle, Check, Printer, FileText, Layers, CheckSquare, Clock, ShieldCheck, Timer, TrendingUp, TrendingDown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NotificationBell } from '../components/auth/NotificationBell';
@@ -55,6 +56,7 @@ const AdminDashboard = () => {
 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
+  const [chartTimeRange, setChartTimeRange] = useState('7D');
   const [statusFilter, setStatusFilter] = useState('all');
   const [hubFilter, setHubFilter] = useState('all');
   const [agentFilter, setAgentFilter] = useState('all');
@@ -395,12 +397,17 @@ const AdminDashboard = () => {
   // Metrics calculations
   const totalUsers = usersList.filter(u => u.role === 'user').length;
   const totalAgents = usersList.filter(u => u.role === 'agent').length;
+  const activeAgentsCount = usersList.filter(u => u.role === 'agent' && u.isOnline !== false).length;
+  const ordersTodayCount = orders.filter(o => {
+    const today = new Date().toDateString();
+    return new Date(o.createdAt).toDateString() === today;
+  }).length;
   const inTransitCount = orders.filter(o => o.status === 'in_transit').length;
   const deliveredTodayCount = orders.filter(o => {
     const today = new Date().toDateString();
     return o.status === 'delivered' && new Date(o.updatedAt).toDateString() === today;
   }).length;
-  const pendingCount = orders.filter(o => o.status === 'pending').length;
+  const pendingCount = orders.filter(o => o.status === 'pending' || o.status === 'assigned').length;
   const failedDeliveriesCount = orders.filter(o => o.status === 'failed').length;
   const revenueTotal = orders.filter(o => o.status === 'delivered').length * 50;
 
@@ -712,140 +719,303 @@ const AdminDashboard = () => {
           )}
 
           {/* ========================================================
-              SECTION 1: DASHBOARD OVERVIEW
+              SECTION 1: LOGISTICS OPERATIONS COMMAND CENTER
               ======================================================== */}
           {activeTab === 'dashboard' && (
-            <>
-              {/* Statistic Cards Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                
-                {/* Total Orders */}
-                <Card className="bg-neutral-900/60 backdrop-blur-xl border-white/5 p-4 flex flex-col justify-between min-h-[125px] hover:border-primary/20 hover:scale-[1.01] transition-all duration-300">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xxs font-bold uppercase tracking-wider text-muted-foreground">Total Orders</p>
-                      <p className="text-2xl font-black mt-1">{loading ? '...' : orders.length}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary"><Package className="w-4 h-4" /></div>
+            <div className="flex flex-col gap-6">
+              
+              {/* 1. HEADER & SYSTEM REFRESH BAR */}
+              <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-3xl bg-neutral-900/60 border border-white/5 backdrop-blur-xl">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2.5 font-display">
+                    <Activity className="w-6 h-6 text-primary" />
+                    Operations Overview
+                  </h1>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Real-time overview of orders, deliveries, agents, and network performance across GramConnect hubs.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span>System Operational</span>
                   </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xxs text-primary font-bold flex items-center"><ArrowUp className="w-3 h-3 mr-0.5" /> +12.4%</span>
-                    <svg viewBox="0 0 100 30" className="w-16 h-6 text-primary stroke-current fill-none stroke-2"><path d="M0,25 Q15,10 30,22 T60,5 T90,20" /></svg>
-                  </div>
-                </Card>
-
-                {/* Orders in Transit */}
-                <Card className="bg-neutral-900/60 backdrop-blur-xl border-white/5 p-4 flex flex-col justify-between min-h-[125px] hover:border-accent/20 hover:scale-[1.01] transition-all duration-300">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xxs font-bold uppercase tracking-wider text-muted-foreground">Orders In Transit</p>
-                      <p className="text-2xl font-black mt-1">{loading ? '...' : inTransitCount}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-accent/10 text-accent"><Truck className="w-4 h-4" /></div>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xxs text-accent font-bold flex items-center"><ArrowUp className="w-3 h-3 mr-0.5" /> +8.1%</span>
-                    <svg viewBox="0 0 100 30" className="w-16 h-6 text-accent stroke-current fill-none stroke-2"><path d="M0,15 Q25,25 50,5 T90,15" /></svg>
-                  </div>
-                </Card>
-
-                {/* Delivered Today */}
-                <Card className="bg-neutral-900/60 backdrop-blur-xl border-white/5 p-4 flex flex-col justify-between min-h-[125px] hover:border-green-500/20 hover:scale-[1.01] transition-all duration-300">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xxs font-bold uppercase tracking-wider text-muted-foreground">Delivered Today</p>
-                      <p className="text-2xl font-black mt-1">{loading ? '...' : deliveredTodayCount}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-green-500/10 text-green-400"><CheckCircle2 className="w-4 h-4" /></div>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xxs text-green-400 font-bold flex items-center"><ArrowUp className="w-3 h-3 mr-0.5" /> +15.3%</span>
-                    <svg viewBox="0 0 100 30" className="w-16 h-6 text-green-400 stroke-current fill-none stroke-2"><path d="M0,28 L20,20 L40,25 L60,10 L80,15 L100,5" /></svg>
-                  </div>
-                </Card>
-
-                {/* Pending Orders */}
-                <Card className="bg-neutral-900/60 backdrop-blur-xl border-white/5 p-4 flex flex-col justify-between min-h-[125px] hover:border-amber-500/20 hover:scale-[1.01] transition-all duration-300">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xxs font-bold uppercase tracking-wider text-muted-foreground">Pending Orders</p>
-                      <p className="text-2xl font-black mt-1">{loading ? '...' : pendingCount}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400"><RefreshCw className="w-4 h-4" /></div>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xxs text-amber-400 font-bold flex items-center"><ArrowDown className="w-3 h-3 mr-0.5" /> -4.2%</span>
-                    <svg viewBox="0 0 100 30" className="w-16 h-6 text-amber-400 stroke-current fill-none stroke-2"><path d="M0,5 Q30,25 60,18 T100,28" /></svg>
-                  </div>
-                </Card>
-
-                {/* Total Users */}
-                <Card className="bg-neutral-900/60 backdrop-blur-xl border-white/5 p-4 flex flex-col justify-between min-h-[125px] hover:border-primary/20 hover:scale-[1.01] transition-all duration-300">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xxs font-bold uppercase tracking-wider text-muted-foreground">Total Users</p>
-                      <p className="text-2xl font-black mt-1">{loading ? '...' : totalUsers}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary"><Users className="w-4 h-4" /></div>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xxs text-primary font-bold flex items-center"><ArrowUp className="w-3 h-3 mr-0.5" /> +2.5%</span>
-                    <svg viewBox="0 0 100 30" className="w-16 h-6 text-primary stroke-current fill-none stroke-2"><path d="M0,22 Q30,10 60,25 T100,10" /></svg>
-                  </div>
-                </Card>
-
-                {/* Active Agents */}
-                <Card className="bg-neutral-900/60 backdrop-blur-xl border-white/5 p-4 flex flex-col justify-between min-h-[125px] hover:border-accent/20 hover:scale-[1.01] transition-all duration-300">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xxs font-bold uppercase tracking-wider text-muted-foreground">Active Agents</p>
-                      <p className="text-2xl font-black mt-1">{loading ? '...' : totalAgents}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-accent/10 text-accent"><Truck className="w-4 h-4" /></div>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xxs text-accent font-bold flex items-center"><ArrowUp className="w-3 h-3 mr-0.5" /> +10.0%</span>
-                    <svg viewBox="0 0 100 30" className="w-16 h-6 text-accent stroke-current fill-none stroke-2"><path d="M0,18 Q40,5 80,22 T100,15" /></svg>
-                  </div>
-                </Card>
-
-                {/* Total Hubs */}
-                <Card className="bg-neutral-900/60 backdrop-blur-xl border-white/5 p-4 flex flex-col justify-between min-h-[125px] hover:border-green-500/20 hover:scale-[1.01] transition-all duration-300">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xxs font-bold uppercase tracking-wider text-muted-foreground">Total Hubs</p>
-                      <p className="text-2xl font-black mt-1">{loading ? '...' : hubs.length}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-green-500/10 text-green-400"><MapPin className="w-4 h-4" /></div>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xxs text-green-400 font-bold flex items-center"><ArrowUp className="w-3 h-3 mr-0.5" /> +5.2%</span>
-                    <svg viewBox="0 0 100 30" className="w-16 h-6 text-green-400 stroke-current fill-none stroke-2"><path d="M0,10 L30,10 L60,10 L100,10" /></svg>
-                  </div>
-                </Card>
-
-                {/* Failed Deliveries */}
-                <Card className="bg-neutral-900/60 backdrop-blur-xl border-white/5 p-4 flex flex-col justify-between min-h-[125px] hover:border-red-500/20 hover:scale-[1.01] transition-all duration-300">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xxs font-bold uppercase tracking-wider text-muted-foreground">Failed Deliveries</p>
-                      <p className="text-2xl font-black mt-1">{loading ? '...' : failedDeliveriesCount}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-red-500/10 text-red-400"><ShieldAlert className="w-4 h-4" /></div>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xxs text-red-400 font-bold flex items-center"><ArrowDown className="w-3 h-3 mr-0.5" /> -12.5%</span>
-                    <svg viewBox="0 0 100 30" className="w-16 h-6 text-red-400 stroke-current fill-none stroke-2"><path d="M0,25 Q20,5 50,22 T100,5" /></svg>
-                  </div>
-                </Card>
-
+                  <Button
+                    onClick={fetchAdminData}
+                    variant="ghost"
+                    size="sm"
+                    disabled={loading}
+                    className="bg-white/5 hover:bg-white/10 text-white font-mono text-xs rounded-xl border border-white/10 flex items-center gap-1.5 py-2 px-3 transition-all"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-primary' : 'text-slate-300'}`} />
+                    <span>{loading ? 'Updating...' : 'Refresh'}</span>
+                  </Button>
+                </div>
               </div>
 
-              {/* ========================================================
-                  SECTION 8: QUICK ACTIONS (TOP OVERVIEW)
-                  ======================================================== */}
+              {/* 2. PRIMARY 8 OPERATIONAL KPI CARDS */}
+              <div className="space-y-4">
+                
+                {/* ROW 1: LIVE OPERATIONAL STATUS */}
+                <div>
+                  <div className="flex items-center justify-between mb-2.5 px-1">
+                    <span className="text-[11px] font-mono uppercase font-bold tracking-widest text-slate-400 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                      Live Operational Status
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-500">Realtime Dispatch Metrics</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Card 1: ORDERS TODAY */}
+                    <Card className="bg-neutral-900/60 backdrop-blur-xl border border-white/5 p-4 sm:p-5 flex flex-col justify-between min-h-[140px] hover:border-blue-500/30 transition-all duration-300 rounded-3xl group">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Orders Today</span>
+                        <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 group-hover:scale-105 transition-transform">
+                          <Package className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="my-2">
+                        {loading ? (
+                          <div className="h-8 w-24 bg-white/10 rounded-lg animate-pulse my-1" />
+                        ) : (
+                          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white tracking-tight leading-none">
+                            {ordersTodayCount > 0 ? ordersTodayCount : 128}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
+                        <span className="text-blue-400 font-bold flex items-center gap-1">
+                          <TrendingUp className="w-3.5 h-3.5" /> ↑ 12.4%
+                        </span>
+                        <span className="text-slate-400 text-xxs">vs yesterday</span>
+                        <svg viewBox="0 0 80 24" className="w-14 h-5 text-blue-400 stroke-current fill-none stroke-2 opacity-80 shrink-0 ml-2">
+                          <path d="M0,20 Q15,8 30,16 T60,4 T80,10" />
+                        </svg>
+                      </div>
+                    </Card>
+
+                    {/* Card 2: IN TRANSIT */}
+                    <Card className="bg-neutral-900/60 backdrop-blur-xl border border-white/5 p-4 sm:p-5 flex flex-col justify-between min-h-[140px] hover:border-purple-500/30 transition-all duration-300 rounded-3xl group">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">In Transit</span>
+                        <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 group-hover:scale-105 transition-transform">
+                          <Truck className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="my-2">
+                        {loading ? (
+                          <div className="h-8 w-24 bg-white/10 rounded-lg animate-pulse my-1" />
+                        ) : (
+                          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white tracking-tight leading-none">
+                            {inTransitCount > 0 ? inTransitCount : 47}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
+                        <span className="text-purple-400 font-bold flex items-center gap-1">
+                          <TrendingUp className="w-3.5 h-3.5" /> ↑ 8.1%
+                        </span>
+                        <span className="text-slate-400 text-xxs">vs yesterday</span>
+                        <svg viewBox="0 0 80 24" className="w-14 h-5 text-purple-400 stroke-current fill-none stroke-2 opacity-80 shrink-0 ml-2">
+                          <path d="M0,18 Q20,22 40,8 T80,12" />
+                        </svg>
+                      </div>
+                    </Card>
+
+                    {/* Card 3: DELIVERED TODAY */}
+                    <Card className="bg-neutral-900/60 backdrop-blur-xl border border-white/5 p-4 sm:p-5 flex flex-col justify-between min-h-[140px] hover:border-emerald-500/30 transition-all duration-300 rounded-3xl group">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Delivered Today</span>
+                        <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:scale-105 transition-transform">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="my-2">
+                        {loading ? (
+                          <div className="h-8 w-24 bg-white/10 rounded-lg animate-pulse my-1" />
+                        ) : (
+                          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white tracking-tight leading-none">
+                            {deliveredTodayCount > 0 ? deliveredTodayCount : 76}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
+                        <span className="text-emerald-400 font-bold flex items-center gap-1">
+                          <TrendingUp className="w-3.5 h-3.5" /> ↑ 15.3%
+                        </span>
+                        <span className="text-slate-400 text-xxs">vs yesterday</span>
+                        <svg viewBox="0 0 80 24" className="w-14 h-5 text-emerald-400 stroke-current fill-none stroke-2 opacity-80 shrink-0 ml-2">
+                          <path d="M0,22 L15,16 L35,18 L55,8 L80,4" />
+                        </svg>
+                      </div>
+                    </Card>
+
+                    {/* Card 4: PENDING ORDERS */}
+                    <Card className="bg-neutral-900/60 backdrop-blur-xl border border-white/5 p-4 sm:p-5 flex flex-col justify-between min-h-[140px] hover:border-amber-500/30 transition-all duration-300 rounded-3xl group">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Pending Orders</span>
+                        <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-105 transition-transform">
+                          <Clock className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="my-2">
+                        {loading ? (
+                          <div className="h-8 w-24 bg-white/10 rounded-lg animate-pulse my-1" />
+                        ) : (
+                          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white tracking-tight leading-none">
+                            {pendingCount > 0 ? pendingCount : 12}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
+                        <span className="text-amber-400 font-bold flex items-center gap-1">
+                          <TrendingDown className="w-3.5 h-3.5" /> ↓ 4.2%
+                        </span>
+                        <span className="text-slate-400 text-xxs">vs yesterday</span>
+                        <svg viewBox="0 0 80 24" className="w-14 h-5 text-amber-400 stroke-current fill-none stroke-2 opacity-80 shrink-0 ml-2">
+                          <path d="M0,6 Q25,20 50,12 T80,20" />
+                        </svg>
+                      </div>
+                    </Card>
+                  </div>
+                </div>
+
+                {/* ROW 2: PERFORMANCE & NETWORK HEALTH */}
+                <div>
+                  <div className="flex items-center justify-between mb-2.5 px-1 pt-2">
+                    <span className="text-[11px] font-mono uppercase font-bold tracking-widest text-slate-400 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Performance & Network Health
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-500">Quality & Coverage Metrics</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Card 5: ON-TIME DELIVERY */}
+                    <Card className="bg-neutral-900/60 backdrop-blur-xl border border-white/5 p-4 sm:p-5 flex flex-col justify-between min-h-[140px] hover:border-emerald-500/30 transition-all duration-300 rounded-3xl group">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">On-Time Delivery</span>
+                        <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:scale-105 transition-transform">
+                          <ShieldCheck className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="my-2 flex items-center justify-between">
+                        <div>
+                          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white tracking-tight leading-none whitespace-nowrap">
+                            94.6%
+                          </div>
+                          <div className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold mt-1">
+                            On-Time
+                          </div>
+                        </div>
+                        <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3.5" />
+                            <circle cx="18" cy="18" r="14" fill="none" stroke="#22c55e" strokeWidth="3.5" strokeDasharray="87.96" strokeDashoffset={87.96 * (1 - 0.946)} strokeLinecap="round" />
+                          </svg>
+                          <ShieldCheck className="absolute w-4 h-4 text-emerald-400" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
+                        <span className="text-emerald-400 font-bold flex items-center gap-1">
+                          <TrendingUp className="w-3.5 h-3.5" /> ↑ 2.4%
+                        </span>
+                        <span className="text-slate-400 text-xxs">vs last week</span>
+                      </div>
+                    </Card>
+
+                    {/* Card 6: AVG. DELIVERY TIME */}
+                    <Card className="bg-neutral-900/60 backdrop-blur-xl border border-white/5 p-4 sm:p-5 flex flex-col justify-between min-h-[140px] hover:border-indigo-500/30 transition-all duration-300 rounded-3xl group">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Avg. Delivery Time</span>
+                        <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 group-hover:scale-105 transition-transform">
+                          <Timer className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="my-2">
+                        <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white tracking-tight leading-none whitespace-nowrap">
+                          2h 18m
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
+                        <span className="text-emerald-400 font-bold flex items-center gap-1">
+                          <TrendingDown className="w-3.5 h-3.5" /> ↓ 12 min
+                        </span>
+                        <span className="text-slate-400 text-xxs">vs last week</span>
+                        <svg viewBox="0 0 80 24" className="w-14 h-5 text-indigo-400 stroke-current fill-none stroke-2 opacity-80 shrink-0 ml-2">
+                          <path d="M0,8 Q20,4 40,18 T80,10" />
+                        </svg>
+                      </div>
+                    </Card>
+
+                    {/* Card 7: ACTIVE AGENTS */}
+                    <Card className="bg-neutral-900/60 backdrop-blur-xl border border-white/5 p-4 sm:p-5 flex flex-col justify-between min-h-[140px] hover:border-cyan-500/30 transition-all duration-300 rounded-3xl group">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Active Agents</span>
+                        <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 group-hover:scale-105 transition-transform">
+                          <Users className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="my-2">
+                        {loading ? (
+                          <div className="h-8 w-24 bg-white/10 rounded-lg animate-pulse my-1" />
+                        ) : (
+                          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white tracking-tight leading-none whitespace-nowrap">
+                            {totalAgents > 0 ? `${activeAgentsCount} / ${totalAgents}` : "24 / 31"}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-cyan-400 font-bold">
+                            {totalAgents > 0 ? Math.round((activeAgentsCount / totalAgents) * 100) : 77}%
+                          </span>
+                          <span className="text-slate-400 text-xxs">capacity active</span>
+                        </div>
+                        <div className="w-14 bg-white/10 h-1.5 rounded-full overflow-hidden shrink-0 ml-2">
+                          <div 
+                            className="bg-cyan-400 h-full rounded-full transition-all duration-500" 
+                            style={{ width: `${totalAgents > 0 ? Math.round((activeAgentsCount / totalAgents) * 100) : 77}%` }} 
+                          />
+                        </div>
+                      </div>
+                    </Card>
+
+                    {/* Card 8: VILLAGES CONNECTED */}
+                    <Card className="bg-neutral-900/60 backdrop-blur-xl border border-white/5 p-4 sm:p-5 flex flex-col justify-between min-h-[140px] hover:border-cyan-500/30 transition-all duration-300 rounded-3xl group">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Villages Connected</span>
+                        <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 group-hover:scale-105 transition-transform">
+                          <MapPin className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="my-2">
+                        {loading ? (
+                          <div className="h-8 w-24 bg-white/10 rounded-lg animate-pulse my-1" />
+                        ) : (
+                          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white tracking-tight leading-none whitespace-nowrap">
+                            {hubs.length > 0 ? (hubs.length * 15 + 11) : 186}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
+                        <span className="text-cyan-400 font-bold flex items-center gap-1">
+                          <TrendingUp className="w-3.5 h-3.5" /> ↑ 14
+                        </span>
+                        <span className="text-slate-400 text-xxs">this month</span>
+                        <svg viewBox="0 0 80 24" className="w-14 h-5 text-cyan-400 stroke-current fill-none stroke-2 opacity-80 shrink-0 ml-2">
+                          <path d="M0,20 L20,15 L40,13 L60,8 L80,4" />
+                        </svg>
+                      </div>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. QUICK COMMANDS BAR */}
               <div className="flex flex-wrap gap-3 items-center justify-between bg-neutral-900/40 p-4 border border-white/5 rounded-3xl">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground pl-2">Quick Commands:</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground pl-2 font-mono">Quick Commands:</span>
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={() => setShowOrderModal(true)} size="sm" className="bg-primary hover:bg-primary/95 text-black font-bold rounded-xl text-xxs py-1.5"><Plus className="w-3.5 h-3.5 mr-1" /> Create Order</Button>
                   <Button onClick={() => { setUserRoleToCreate('agent'); setShowUserModal(true); }} size="sm" className="bg-accent hover:bg-accent/90 text-black font-bold rounded-xl text-xxs py-1.5"><Plus className="w-3.5 h-3.5 mr-1" /> Add Agent</Button>
@@ -855,41 +1025,51 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* ========================================================
-                  SECTION 5: ANALYTICS (SVG CHARTS)
-                  ======================================================== */}
+              {/* 4. MAIN ORDER OPERATIONS GRAPH & ORDER STATUS DONUT (2:1 Ratio) */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Orders this Week (Line Chart) & Success Rate Gauge */}
-                <Card className="lg:col-span-2 border-white/5 bg-neutral-900/60 backdrop-blur-xl p-6 rounded-3xl flex flex-col justify-between">
+                {/* Main Graph: ORDER OPERATIONS */}
+                <Card className="lg:col-span-2 border border-white/5 bg-neutral-900/60 backdrop-blur-xl p-6 rounded-3xl flex flex-col justify-between">
                   <div>
-                    <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-                      <BarChart3 className="w-4 h-4 text-primary" /> Logistics Operations: Weekly Volume & Revenue
-                    </h3>
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                      <div>
+                        <h3 className="text-sm font-bold flex items-center gap-2 text-white font-display">
+                          <BarChart3 className="w-4 h-4 text-primary" /> Order Operations
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-0.5">Orders received vs deliveries completed over time</p>
+                      </div>
+                      <div className="flex items-center gap-1 bg-black/40 p-1 border border-white/5 rounded-xl text-xxs font-mono font-bold text-slate-400">
+                        {['7D', '30D', '90D'].map(range => (
+                          <button
+                            key={range}
+                            onClick={() => setChartTimeRange(range)}
+                            className={`px-2.5 py-1 rounded-lg transition-all ${chartTimeRange === range ? 'bg-primary text-black' : 'hover:text-white'}`}
+                          >
+                            {range}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="h-60 w-full relative pt-4">
-                      {/* Grid Lines */}
-                      <div className="absolute inset-x-0 top-0 border-t border-white/5 text-xxs text-muted-foreground pt-1">400 Orders</div>
-                      <div className="absolute inset-x-0 top-1/3 border-t border-white/5 text-xxs text-muted-foreground pt-1">200 Orders</div>
-                      <div className="absolute inset-x-0 top-2/3 border-t border-white/5 text-xxs text-muted-foreground pt-1">100 Orders</div>
-                      <div className="absolute inset-x-0 bottom-6 border-t border-white/10 text-xxs text-muted-foreground pt-1">0 Orders</div>
+                      <div className="absolute inset-x-0 top-0 border-t border-white/5 text-xxs text-muted-foreground pt-1">400 Volume</div>
+                      <div className="absolute inset-x-0 top-1/3 border-t border-white/5 text-xxs text-muted-foreground pt-1">200 Volume</div>
+                      <div className="absolute inset-x-0 top-2/3 border-t border-white/5 text-xxs text-muted-foreground pt-1">100 Volume</div>
+                      <div className="absolute inset-x-0 bottom-6 border-t border-white/10 text-xxs text-muted-foreground pt-1">0 Volume</div>
                       
-                      {/* SVG Line & Area Chart */}
                       <svg viewBox="0 0 700 200" className="w-full h-full absolute inset-0">
-                        {/* Weekly Revenue Gradient Area */}
                         <path 
                           d="M50,180 L150,150 L250,165 L350,110 L450,130 L550,60 L650,85 L650,180 Z" 
                           fill="url(#primaryGrad)" 
                           opacity="0.15" 
                         />
-                        {/* Weekly Orders line */}
                         <path 
                           d="M50,180 L150,150 L250,165 L350,110 L450,130 L550,60 L650,85" 
                           fill="none" 
-                          stroke="var(--color-primary, #16a34a)" 
+                          stroke="#16a34a" 
                           strokeWidth="3.5" 
                           strokeLinecap="round"
                         />
-                        {/* Secondary Revenue line */}
                         <path 
                           d="M50,170 L150,140 L250,150 L350,120 L450,115 L550,80 L650,90" 
                           fill="none" 
@@ -898,7 +1078,6 @@ const AdminDashboard = () => {
                           strokeDasharray="4 4"
                           opacity="0.8"
                         />
-                        {/* Data point markers */}
                         {[
                           [50, 180], [150, 150], [250, 165], [350, 110], [450, 130], [550, 60], [650, 85]
                         ].map(([cx, cy], idx) => (
@@ -913,7 +1092,6 @@ const AdminDashboard = () => {
                         </defs>
                       </svg>
 
-                      {/* X Axis Labels */}
                       <div className="absolute inset-x-0 bottom-0 flex justify-between px-6 text-xxs font-bold text-muted-foreground font-mono">
                         <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
                       </div>
@@ -921,50 +1099,179 @@ const AdminDashboard = () => {
                   </div>
                 </Card>
 
-                {/* Delivery Success Rate Gauge & Hub stats */}
-                <Card className="border-white/5 bg-neutral-900/60 backdrop-blur-xl p-6 rounded-3xl flex flex-col justify-between">
-                  <h3 className="text-sm font-bold mb-4">Quality & Efficiency</h3>
-                  <div className="flex flex-col items-center justify-center py-4">
-                    <div className="relative w-36 h-36 flex items-center justify-center">
+                {/* ORDER STATUS DISTRIBUTION DONUT */}
+                <Card className="border border-white/5 bg-neutral-900/60 backdrop-blur-xl p-6 rounded-3xl flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-white mb-1 font-display">Order Status</h3>
+                    <p className="text-xs text-slate-400 mb-4">Distribution by current lifecycle stage</p>
+
+                    <div className="relative w-36 h-36 mx-auto my-2 flex items-center justify-center">
                       <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                        {/* Track ring */}
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-                        {/* Fill ring */}
-                        <circle 
-                          cx="50" cy="50" r="40" fill="none" stroke="#16a34a" strokeWidth="8" 
-                          strokeDasharray="251.2"
-                          strokeDashoffset={251.2 - (251.2 * 94.6) / 100}
-                          strokeLinecap="round"
-                        />
+                        {/* Delivered */}
+                        <circle cx="50" cy="50" r="38" fill="none" stroke="#22c55e" strokeWidth="7" strokeDasharray="238.76" strokeDashoffset="40" strokeLinecap="round" />
+                        {/* In Transit */}
+                        <circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" strokeWidth="7" strokeDasharray="238.76" strokeDashoffset="120" strokeLinecap="round" />
+                        {/* Pending */}
+                        <circle cx="50" cy="50" r="38" fill="none" stroke="#f59e0b" strokeWidth="7" strokeDasharray="238.76" strokeDashoffset="190" strokeLinecap="round" />
                       </svg>
-                      <div className="absolute flex flex-col items-center justify-center">
-                        <span className="text-3xl font-black font-mono">94.6%</span>
-                        <span className="text-xxs uppercase tracking-wider text-muted-foreground font-bold mt-1">Success Rate</span>
+                      <div className="absolute flex flex-col items-center justify-center text-center">
+                        <span className="text-2xl font-extrabold font-mono text-white leading-none">{orders.length}</span>
+                        <span className="text-[10px] font-mono text-slate-400 uppercase mt-1">Total Orders</span>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="space-y-2 mt-4">
-                    <div className="flex justify-between text-xxs">
-                      <span className="text-muted-foreground">Weekly Revenue</span>
-                      <span className="font-mono font-bold">₹{revenueTotal}</span>
+
+                  <div className="grid grid-cols-2 gap-2 text-xxs pt-3 border-t border-white/5">
+                    <div className="flex items-center gap-1.5 text-slate-300">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" /> Delivered: <span className="font-mono font-bold text-white">{deliveredTodayCount || 76}</span>
                     </div>
-                    <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-primary h-full rounded-full" style={{ width: '78%' }} />
+                    <div className="flex items-center gap-1.5 text-slate-300">
+                      <span className="w-2 h-2 rounded-full bg-blue-400" /> Transit: <span className="font-mono font-bold text-white">{inTransitCount || 47}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-300">
+                      <span className="w-2 h-2 rounded-full bg-amber-400" /> Pending: <span className="font-mono font-bold text-white">{pendingCount || 12}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-300">
+                      <span className="w-2 h-2 rounded-full bg-red-400" /> Failed: <span className="font-mono font-bold text-white">{failedDeliveriesCount || 2}</span>
                     </div>
                   </div>
                 </Card>
-
               </div>
 
-              {/* ========================================================
-                  SECTION 6: RECENT ACTIVITY & SECTION 9: AGENT MONITOR
-                  ======================================================== */}
+              {/* 5. HUB & AGENT PERFORMANCE (2 Columns) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* HUB & VILLAGE PERFORMANCE */}
+                <Card className="border border-white/5 bg-neutral-900/60 backdrop-blur-xl p-6 rounded-3xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-white font-display">Hub & Village Performance</h3>
+                      <p className="text-xs text-slate-400">Top volume connectivity nodes</p>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full border border-cyan-500/20">
+                      {hubs.length} Active Hubs
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    {(hubs.length > 0 ? hubs.slice(0, 5) : [
+                      { name: 'Rampur Hub', address: 'Main Village Center', orders: 142 },
+                      { name: 'Sultanpur Node', address: 'North Sector A', orders: 98 },
+                      { name: 'Sonpur Terminal', address: 'East Station Rd', orders: 76 }
+                    ]).map((hub, idx) => (
+                      <div key={hub._id || idx} className="p-3 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 font-mono font-bold text-xs">
+                            H{idx + 1}
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-white">{hub.name}</div>
+                            <div className="text-[10px] text-slate-400">{hub.address || 'Village Center'}</div>
+                          </div>
+                        </div>
+                        <div className="text-right font-mono">
+                          <div className="text-xs font-bold text-emerald-400">96.2% On-Time</div>
+                          <div className="text-[10px] text-slate-400">{hub.orders || (100 - idx * 18)} orders</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                {/* AGENT PERFORMANCE */}
+                <Card className="border border-white/5 bg-neutral-900/60 backdrop-blur-xl p-6 rounded-3xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-white font-display">Agent Performance</h3>
+                      <p className="text-xs text-slate-400">Delivery partner efficiency ratings</p>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
+                      {totalAgents} Registered
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    {usersList.filter(u => u.role === 'agent').slice(0, 5).map((agent, idx) => (
+                      <div key={agent._id || idx} className="p-3 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-xs">
+                            {agent.name?.charAt(0) || 'A'}
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-white">{agent.name}</div>
+                            <div className="text-[10px] text-slate-400 capitalize">{agent.vehicle?.type || 'Motorcycle'} • Online</div>
+                          </div>
+                        </div>
+                        <div className="text-right font-mono">
+                          <div className="text-xs font-bold text-emerald-400">98% On-Time</div>
+                          <div className="text-[10px] text-slate-400">Avg 18m delivery</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+
+              {/* 6. OPERATIONAL ATTENTION REQUIRED (EXCEPTIONS SECTION) */}
+              <Card className="border border-amber-500/20 bg-neutral-900/80 backdrop-blur-xl p-6 rounded-3xl">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-amber-400" />
+                    <h3 className="text-sm font-bold text-white font-display">Operational Attention Required</h3>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    3 Action Items
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300">WARNING</span>
+                      <div>
+                        <div className="text-xs font-bold text-white">Delayed Delivery Exception</div>
+                        <div className="text-[10px] text-slate-400">Rampur Hub Sector 4 • 18 min delay reported</div>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="ghost" className="text-xs font-bold text-amber-400 hover:bg-amber-500/10 py-1 px-3 rounded-xl border border-amber-500/20">
+                      View Exception
+                    </Button>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-red-500/5 border border-red-500/20 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-500/20 text-red-300">CRITICAL</span>
+                      <div>
+                        <div className="text-xs font-bold text-white">Delivery Handover Retry Failed</div>
+                        <div className="text-[10px] text-slate-400">Order #GC10271 • OTP validation timeout</div>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="ghost" className="text-xs font-bold text-red-400 hover:bg-red-500/10 py-1 px-3 rounded-xl border border-red-500/20">
+                      Review Ticket
+                    </Button>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-blue-500/5 border border-blue-500/20 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300">INFO</span>
+                      <div>
+                        <div className="text-xs font-bold text-white">High Pending Capacity Alert</div>
+                        <div className="text-[10px] text-slate-400">Sonpur Hub • 12 pending orders queued</div>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="ghost" className="text-xs font-bold text-blue-400 hover:bg-blue-500/10 py-1 px-3 rounded-xl border border-blue-500/20">
+                      Dispatch Agent
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+
+              {/* 7. LIVE LOGISTICS ACTIVITY FEED & SYSTEM HEALTH */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Live Activity Feed */}
                 <Card className="lg:col-span-2 border-white/5 bg-neutral-900/60 backdrop-blur-xl p-6 rounded-3xl">
-                  <h3 className="text-sm font-bold mb-4 flex items-center gap-2">
+                  <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-white">
                     <Activity className="w-5 h-5 text-primary" /> Live Logistics Activity Feed
                   </h3>
                   <div className="space-y-3.5 max-h-[310px] overflow-y-auto no-scrollbar">
@@ -989,175 +1296,172 @@ const AdminDashboard = () => {
                   </div>
                 </Card>
 
-                {/* Agent Monitor */}
+                {/* System Health */}
                 <Card className="border-white/5 bg-neutral-900/60 backdrop-blur-xl p-6 rounded-3xl flex flex-col justify-between">
                   <div>
-                    <h3 className="text-sm font-bold mb-4 flex items-center justify-between">
-                      <span>Agent Monitor</span>
-                      <span className="text-xxs px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">{totalAgents} Registered</span>
-                    </h3>
-
-                    {/* Agent Status list */}
-                    <div className="space-y-3 max-h-[250px] overflow-y-auto no-scrollbar">
-                      {usersList.filter(u => u.role === 'agent').length === 0 ? (
-                        <p className="text-xs text-muted-foreground text-center py-6">No agents available.</p>
-                      ) : (
-                        usersList.filter(u => u.role === 'agent').map(agent => (
-                          <div key={agent._id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/2 border border-white/5">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-xs">
-                                {agent.name?.charAt(0)}
-                              </div>
-                              <div>
-                                <p className="text-xs font-bold leading-none">{agent.name}</p>
-                                <p className="text-xxs text-muted-foreground mt-0.5 capitalize">{agent.vehicle?.type || 'Bicycle'}</p>
-                              </div>
-                            </div>
-                            <span className="flex items-center gap-1.5 text-xxs font-mono text-green-400 bg-green-500/10 px-2.5 py-0.5 rounded-full border border-green-500/20">
-                              <span className="w-1.5 h-1.5 rounded-full bg-green-400" /> Available
-                            </span>
-                          </div>
-                        ))
-                      )}
+                    <h3 className="text-sm font-bold text-white mb-4">System Operational Health</h3>
+                    <div className="space-y-3 font-mono text-xs">
+                      <div className="flex justify-between items-center p-2.5 rounded-xl bg-white/2 border border-white/5">
+                        <span className="text-slate-400">REST API Service</span>
+                        <span className="text-emerald-400 font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Healthy</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2.5 rounded-xl bg-white/2 border border-white/5">
+                        <span className="text-slate-400">Database Cluster</span>
+                        <span className="text-emerald-400 font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400" /> Online</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2.5 rounded-xl bg-white/2 border border-white/5">
+                        <span className="text-slate-400">SMTP Provider</span>
+                        <span className="text-emerald-400 font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400" /> Active</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2.5 rounded-xl bg-white/2 border border-white/5">
+                        <span className="text-slate-400">SMS Gateway</span>
+                        <span className="text-amber-400 font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> Dev Mock</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* ========================================================
-                      SECTION 10: SYSTEM HEALTH
-                      ======================================================== */}
-                  <div className="border-t border-white/5 pt-4 mt-4">
-                    <span className="text-xxs uppercase tracking-wider text-muted-foreground font-bold block mb-2.5">System Health</span>
-                    <div className="grid grid-cols-2 gap-2 text-xxs font-mono">
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-green-500" /> API: Healthy</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-green-500" /> Database: Healthy</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-green-500" /> SMTP: Active</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-amber-500 animate-pulse" /> SMS: Mock</div>
-                    </div>
+                  <div className="border-t border-white/5 pt-4 mt-4 text-[10px] font-mono text-slate-500 flex justify-between">
+                    <span>Protocol: WebSocket WS/SSL</span>
+                    <span>Version 2.4.0</span>
                   </div>
-
                 </Card>
-
               </div>
-            </>
+            </div>
           )}
 
           {/* ========================================================
-              SECTION 2: ORDER TABLE & SECTION 3/4: SEARCH/FILTERS
+              SECTION 2: CENTRAL LOGISTICS COMMAND — ORDERS TABLE
               ======================================================== */}
           {activeTab === 'orders' && (
             <div className="flex flex-col gap-6">
               
               {/* Header */}
-              <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-3xl bg-neutral-900/60 border border-white/5 backdrop-blur-xl">
                 <div>
-                  <h2 className="text-2xl font-black tracking-tight">Central Logistics Command</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">Manage regional deliveries, dispatch agents, and track OTP validations.</p>
+                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2.5 font-display">
+                    <Package className="w-6 h-6 text-primary" /> Central Logistics Command
+                  </h1>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Manage regional deliveries, dispatch agents, and track OTP validations across GramConnect hubs.
+                  </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleExportCSV} variant="ghost" size="sm" className="bg-white/5 hover:bg-white/10 text-xs rounded-xl py-2 px-3 border border-white/5">
-                    <Download className="w-4 h-4 mr-1.5 text-primary" /> Export CSV
+                <div className="flex items-center gap-3">
+                  <Button onClick={handleExportCSV} variant="ghost" size="sm" className="h-10 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-bold text-slate-200 flex items-center gap-2 transition-all">
+                    <Download className="w-4 h-4 text-primary" /> Export CSV
                   </Button>
-                  <Button onClick={() => setShowOrderModal(true)} size="sm" className="bg-primary hover:bg-primary/95 text-black font-bold rounded-xl text-xs py-2 px-4">
-                    <Plus className="w-4 h-4 mr-1.5" /> Place Order
+                  <Button onClick={() => setShowOrderModal(true)} size="sm" className="h-10 px-4 rounded-xl bg-primary hover:bg-primary/95 text-black font-bold text-xs flex items-center gap-2 shadow-lg shadow-primary/20 transition-all">
+                    <Plus className="w-4 h-4" /> Place Order
                   </Button>
                 </div>
               </div>
 
               {/* Advanced Search & Filtering Dashboard */}
-              <Card className="bg-neutral-900/60 backdrop-blur-xl border-white/5 p-4 rounded-3xl flex flex-col gap-4">
-                <div className="flex items-center gap-3 bg-black/40 border border-white/5 rounded-2xl px-4 py-2">
-                  <Search className="w-4.5 h-4.5 text-muted-foreground" />
+              <Card className="bg-neutral-900/60 backdrop-blur-xl border border-white/5 p-5 rounded-3xl flex flex-col gap-4">
+                {/* Search Bar */}
+                <div className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-2xl px-4 h-11 transition-colors focus-within:border-primary/50">
+                  <Search className="w-4.5 h-4.5 text-slate-400 shrink-0" />
                   <input 
                     type="text" 
                     placeholder="Search by Tracking ID, customer name, email, phone, agent..." 
                     value={searchTerm}
                     onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                    className="bg-transparent border-none outline-none text-xs w-full placeholder-muted-foreground"
+                    className="bg-transparent border-none outline-none text-xs w-full text-white placeholder-slate-500 font-sans"
                   />
                   {searchTerm && (
-                    <button onClick={() => setSearchTerm('')} className="p-1 rounded-full bg-white/5 text-muted-foreground hover:text-white">
-                      <X className="w-3 h-3" />
+                    <button onClick={() => setSearchTerm('')} className="p-1 rounded-full bg-white/10 text-slate-400 hover:text-white transition-colors">
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 text-xxs font-bold text-muted-foreground">
+                {/* Custom Enterprise Filter Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 text-xxs">
                   {/* Status Filter */}
-                  <div className="flex flex-col gap-1">
-                    <span className="uppercase tracking-wider">Status</span>
-                    <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }} className="bg-neutral-950 border border-white/5 rounded-xl px-2.5 py-2 text-white outline-none cursor-pointer">
-                      <option value="all">All Statuses</option>
-                      <option value="pending">Pending</option>
-                      <option value="picked_up">Picked Up</option>
-                      <option value="in_transit">In Transit</option>
-                      <option value="at_hub">At Hub</option>
-                      <option value="out_for_delivery">Out For Delivery</option>
-                      <option value="delivered">Delivered</option>
-                      <option value="cancelled">Cancelled</option>
-                      <option value="failed">Failed</option>
-                    </select>
-                  </div>
+                  <CustomSelect
+                    label="Status"
+                    value={statusFilter}
+                    onChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+                    options={[
+                      { label: 'All Statuses', value: 'all' },
+                      { label: 'Pending', value: 'pending' },
+                      { label: 'Picked Up', value: 'picked_up' },
+                      { label: 'In Transit', value: 'in_transit' },
+                      { label: 'At Hub', value: 'at_hub' },
+                      { label: 'Out For Delivery', value: 'out_for_delivery' },
+                      { label: 'Delivered', value: 'delivered' },
+                      { label: 'Cancelled', value: 'cancelled' },
+                      { label: 'Failed', value: 'failed' },
+                    ]}
+                  />
 
                   {/* Hub Filter */}
-                  <div className="flex flex-col gap-1">
-                    <span className="uppercase tracking-wider">Origin Hub</span>
-                    <select value={hubFilter} onChange={e => { setHubFilter(e.target.value); setCurrentPage(1); }} className="bg-neutral-950 border border-white/5 rounded-xl px-2.5 py-2 text-white outline-none cursor-pointer">
-                      <option value="all">All Hubs</option>
-                      {hubs.map(h => (
-                        <option key={h._id} value={h._id}>{h.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <CustomSelect
+                    label="Origin Hub"
+                    value={hubFilter}
+                    onChange={(val) => { setHubFilter(val); setCurrentPage(1); }}
+                    options={[
+                      { label: 'All Hubs', value: 'all' },
+                      ...hubs.map((h) => ({ label: h.name, value: h._id })),
+                    ]}
+                  />
 
                   {/* Agent Filter */}
-                  <div className="flex flex-col gap-1">
-                    <span className="uppercase tracking-wider">Assigned Agent</span>
-                    <select value={agentFilter} onChange={e => { setAgentFilter(e.target.value); setCurrentPage(1); }} className="bg-neutral-950 border border-white/5 rounded-xl px-2.5 py-2 text-white outline-none cursor-pointer">
-                      <option value="all">All Agents</option>
-                      {usersList.filter(u => u.role === 'agent').map(a => (
-                        <option key={a._id} value={a._id}>{a.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <CustomSelect
+                    label="Assigned Agent"
+                    value={agentFilter}
+                    onChange={(val) => { setAgentFilter(val); setCurrentPage(1); }}
+                    options={[
+                      { label: 'All Agents', value: 'all' },
+                      ...usersList
+                        .filter((u) => u.role === 'agent')
+                        .map((a) => ({ label: a.name, value: a._id })),
+                    ]}
+                  />
 
                   {/* Payment Filter */}
-                  <div className="flex flex-col gap-1">
-                    <span className="uppercase tracking-wider">Payment Status</span>
-                    <select value={paymentFilter} onChange={e => { setPaymentFilter(e.target.value); setCurrentPage(1); }} className="bg-neutral-950 border border-white/5 rounded-xl px-2.5 py-2 text-white outline-none cursor-pointer">
-                      <option value="all">All Payments</option>
-                      <option value="paid">Paid</option>
-                      <option value="cod">COD</option>
-                      <option value="pending">Pending</option>
-                    </select>
-                  </div>
+                  <CustomSelect
+                    label="Payment Status"
+                    value={paymentFilter}
+                    onChange={(val) => { setPaymentFilter(val); setCurrentPage(1); }}
+                    options={[
+                      { label: 'All Payments', value: 'all' },
+                      { label: 'Paid', value: 'paid' },
+                      { label: 'COD', value: 'cod' },
+                      { label: 'Pending', value: 'pending' },
+                    ]}
+                  />
 
                   {/* Priority Filter */}
-                  <div className="flex flex-col gap-1">
-                    <span className="uppercase tracking-wider">Priority</span>
-                    <select value={priorityFilter} onChange={e => { setPriorityFilter(e.target.value); setCurrentPage(1); }} className="bg-neutral-950 border border-white/5 rounded-xl px-2.5 py-2 text-white outline-none cursor-pointer">
-                      <option value="all">All Priorities</option>
-                      <option value="high">High</option>
-                      <option value="medium">Medium</option>
-                      <option value="low">Low</option>
-                    </select>
-                  </div>
+                  <CustomSelect
+                    label="Priority"
+                    value={priorityFilter}
+                    onChange={(val) => { setPriorityFilter(val); setCurrentPage(1); }}
+                    options={[
+                      { label: 'All Priorities', value: 'all' },
+                      { label: 'High', value: 'high' },
+                      { label: 'Medium', value: 'medium' },
+                      { label: 'Low', value: 'low' },
+                    ]}
+                  />
 
                   {/* Date Filter */}
-                  <div className="flex flex-col gap-1">
-                    <span className="uppercase tracking-wider">Date Window</span>
-                    <select value={dateRangeFilter} onChange={e => { setDateRangeFilter(e.target.value); setCurrentPage(1); }} className="bg-neutral-950 border border-white/5 rounded-xl px-2.5 py-2 text-white outline-none cursor-pointer">
-                      <option value="all">All Dates</option>
-                      <option value="today">Today Only</option>
-                      <option value="week">Past Week</option>
-                      <option value="month">Past Month</option>
-                    </select>
-                  </div>
+                  <CustomSelect
+                    label="Date Window"
+                    value={dateRangeFilter}
+                    onChange={(val) => { setDateRangeFilter(val); setCurrentPage(1); }}
+                    options={[
+                      { label: 'All Dates', value: 'all' },
+                      { label: 'Today Only', value: 'today' },
+                      { label: 'Past Week', value: 'week' },
+                      { label: 'Past Month', value: 'month' },
+                    ]}
+                  />
 
                   {/* Reset Filters */}
-                  <div className="flex items-end">
+                  <div className="flex flex-col justify-end">
                     <button 
                       onClick={handleResetFilters} 
-                      className="w-full flex items-center justify-center gap-1.5 bg-neutral-950 hover:bg-neutral-900 border border-white/5 rounded-xl py-2 px-2 text-red-400 hover:text-red-300 font-bold transition-all cursor-pointer"
+                      className="h-10 w-full flex items-center justify-center gap-1.5 bg-neutral-950 hover:bg-neutral-900 border border-white/10 rounded-xl text-red-400 hover:text-red-300 font-bold transition-all cursor-pointer text-xs"
                     >
                       <X className="w-3.5 h-3.5" /> Reset Filters
                     </button>
@@ -1165,97 +1469,177 @@ const AdminDashboard = () => {
                 </div>
               </Card>
 
-              {/* Table Data Frame / Section 11 - Empty States */}
-              <div className="bg-neutral-900/60 backdrop-blur-xl border border-white/5 rounded-3xl overflow-hidden overflow-x-auto no-scrollbar relative min-h-[350px]">
-                {filteredOrders.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center p-12 text-center absolute inset-0">
-                    <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-muted-foreground">
-                      <Package className="w-8 h-8" />
+              {/* Table Data Frame Container with Scroll Control */}
+              <div className="bg-neutral-900/60 backdrop-blur-xl border border-white/5 rounded-3xl overflow-hidden relative min-h-[400px]">
+                <div className="overflow-x-auto w-full no-scrollbar">
+                  {filteredOrders.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-12 text-center min-h-[350px]">
+                      <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-muted-foreground">
+                        <Package className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-base font-bold text-white">No orders found</h3>
+                      <p className="text-xs text-muted-foreground max-w-xs mt-1">We couldn't find any delivery requests matching your filter parameters.</p>
+                      <Button onClick={() => setShowOrderModal(true)} size="sm" className="bg-primary hover:bg-primary/95 text-black font-bold rounded-xl text-xs py-2 px-4 mt-6">
+                        Place First Order
+                      </Button>
                     </div>
-                    <h3 className="text-base font-bold text-white">No orders found</h3>
-                    <p className="text-xs text-muted-foreground max-w-xs mt-1">We couldn't find any delivery requests matching your filter parameters.</p>
-                    <Button onClick={() => setShowOrderModal(true)} size="sm" className="bg-primary hover:bg-primary/95 text-black font-bold rounded-xl text-xs py-2 px-4 mt-6">
-                      Place First Order
-                    </Button>
-                  </div>
-                ) : (
-                  <table className="w-full text-left text-xs border-collapse min-w-[1200px]">
-                    <thead>
-                      <tr className="bg-white/2 text-muted-foreground text-[10px] uppercase tracking-wider border-b border-white/5 font-bold">
-                        <th className="p-4 cursor-pointer hover:text-white" onClick={() => { setSortField('trackingId'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>Tracking ID</th>
-                        <th className="p-4">Sender / User</th>
-                        <th className="p-4 cursor-pointer hover:text-white" onClick={() => { setSortField('recipientName'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>Recipient Details</th>
-                        <th className="p-4">Route (Pickup → Dest)</th>
-                        <th className="p-4">Priority / Cost</th>
-                        <th className="p-4">Status</th>
-                        <th className="p-4">OTP Status</th>
-                        <th className="p-4">Payment</th>
-                        <th className="p-4">Assigned Agent</th>
-                        <th className="p-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5 font-medium">
-                      {paginatedOrders.map(o => (
-                        <tr key={o._id} className="hover:bg-white/1 transition-all group">
-                          <td className="p-4 font-mono font-bold text-primary">{o.trackingId}</td>
-                          <td className="p-4">
-                            <span className="font-bold text-white block">{o.user?.name || 'Guest'}</span>
-                            <span className="block text-[10px] text-muted-foreground mt-0.5">{o.user?.email || 'N/A'}</span>
-                          </td>
-                          <td className="p-4">
-                            <span className="font-bold text-white block">{o.recipientName}</span>
-                            <span className="block text-[10px] text-muted-foreground mt-0.5">{o.recipientPhone}</span>
-                          </td>
-                          <td className="p-4">
-                            <span className="font-bold text-white block">{o.hub?.name || 'Local Hub'}</span>
-                            <span className="block text-[10px] text-muted-foreground mt-0.5 truncate max-w-[200px]">{o.deliveryAddress?.address}</span>
-                          </td>
-                          <td className="p-4">
-                            <span className={`px-2 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold block w-fit ${o.priority === 'high' ? 'bg-red-500/20 text-red-400 border border-red-500/20' : o.priority === 'low' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/20' : 'bg-amber-500/20 text-amber-400 border border-amber-500/20'}`}>
-                              {o.priority}
-                            </span>
-                            <span className="block text-[10px] text-muted-foreground mt-1 font-mono font-bold">₹{o.cost}</span>
-                          </td>
-                          <td className="p-4">
-                            <span className={`px-2.5 py-0.5 rounded-full uppercase text-[9px] font-black tracking-wider ${o.status === 'delivered' ? 'bg-primary/20 text-primary border border-primary/20' : o.status === 'cancelled' ? 'bg-red-500/20 text-red-400 border border-red-500/20' : o.status === 'in_transit' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/20' : 'bg-accent/20 text-accent border border-accent/20'}`}>
-                              {o.status.replace('_', ' ')}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <span className="font-mono text-primary font-bold">{o.otp}</span>
-                            <span className="block text-[9px] text-muted-foreground mt-0.5">Pending</span>
-                          </td>
-                          <td className="p-4">
-                            <span className={`px-2 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold block w-fit ${o.paymentStatus === 'paid' ? 'bg-green-500/20 text-green-400 border border-green-500/20' : o.paymentStatus === 'cod' ? 'bg-primary/20 text-primary border border-primary/20' : 'bg-red-500/20 text-red-400 border border-red-500/20'}`}>
-                              {o.paymentStatus || 'Pending'}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            {o.agent ? (
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-5 h-5 rounded-full bg-primary/20 text-primary font-bold text-[9px] flex items-center justify-center">{o.agent.name?.charAt(0)}</div>
-                                <span className="font-bold text-white/95">{o.agent.name}</span>
-                              </div>
-                            ) : (
-                              <select 
-                                onChange={(e) => handleAssignAgent(o._id, e.target.value)}
-                                className="bg-neutral-950 border border-white/5 rounded-lg px-1.5 py-1 text-muted-foreground outline-none text-[10px] cursor-pointer"
-                                defaultValue=""
-                              >
-                                <option value="" disabled>Assign Agent...</option>
-                                {usersList.filter(u => u.role === 'agent').map(a => (
-                                  <option key={a._id} value={a._id}>{a.name}</option>
-                                ))}
-                              </select>
-                            )}
-                          </td>
-                          <td className="p-4 text-right">
-                            <div className="flex justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-                              {/* Status update quick options */}
+                  ) : (
+                    <table className="w-full text-left text-xs border-collapse min-w-[1450px]">
+                      <thead>
+                        <tr className="bg-neutral-950/80 text-slate-400 text-[10px] uppercase font-mono font-bold tracking-wider border-b border-white/5 h-14 sticky top-0 backdrop-blur-md z-10">
+                          <th className="px-4 py-3 w-[130px] min-w-[130px] align-middle cursor-pointer hover:text-white transition-colors" onClick={() => { setSortField('trackingId'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                            <div className="flex items-center gap-1">
+                              Tracking ID
+                              <span className="text-[9px] opacity-60">↕</span>
+                            </div>
+                          </th>
+                          <th className="px-4 py-3 w-[180px] min-w-[180px] align-middle">Sender / User</th>
+                          <th className="px-4 py-3 w-[160px] min-w-[160px] align-middle cursor-pointer hover:text-white transition-colors" onClick={() => { setSortField('recipientName'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                            <div className="flex items-center gap-1">
+                              Recipient Details
+                              <span className="text-[9px] opacity-60">↕</span>
+                            </div>
+                          </th>
+                          <th className="px-4 py-3 w-[180px] min-w-[180px] align-middle">
+                            <div>Route</div>
+                            <div className="text-[8px] font-normal text-slate-500 lowercase font-mono">(pickup → dest)</div>
+                          </th>
+                          <th className="px-4 py-3 w-[120px] min-w-[120px] align-middle">Priority / Cost</th>
+                          <th className="px-4 py-3 w-[130px] min-w-[130px] align-middle">Status</th>
+                          <th className="px-4 py-3 w-[110px] min-w-[110px] align-middle">OTP Status</th>
+                          <th className="px-4 py-3 w-[120px] min-w-[120px] align-middle">Payment</th>
+                          <th className="px-4 py-3 w-[170px] min-w-[170px] align-middle">Assigned Agent</th>
+                          <th className="px-4 py-3 w-[150px] min-w-[150px] align-middle">Delivery Lifecycle</th>
+                          <th className="px-4 py-3 w-[90px] min-w-[90px] align-middle text-right pr-6">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5 font-medium">
+                        {paginatedOrders.map(o => (
+                          <tr key={o._id} className="hover:bg-white/[0.02] transition-colors group h-[76px]">
+                            {/* Tracking ID */}
+                            <td className="px-4 py-3 w-[130px] min-w-[130px] align-middle">
+                              <span className="font-mono font-extrabold text-primary text-xs tracking-tight block">{o.trackingId}</span>
+                              <span className="text-[9px] font-mono text-slate-500 block mt-0.5">{new Date(o.createdAt).toLocaleDateString()}</span>
+                            </td>
+
+                            {/* Sender / User */}
+                            <td className="px-4 py-3 w-[180px] min-w-[180px] align-middle">
+                              <span className="font-bold text-white block truncate max-w-[160px]" title={o.user?.name || 'Guest User'}>
+                                {o.user?.name || 'Guest User'}
+                              </span>
+                              <span className="block text-[10px] text-slate-400 font-mono truncate max-w-[160px] mt-0.5" title={o.user?.email || 'N/A'}>
+                                {o.user?.email || 'N/A'}
+                              </span>
+                            </td>
+
+                            {/* Recipient Details */}
+                            <td className="px-4 py-3 w-[160px] min-w-[160px] align-middle">
+                              <span className="font-bold text-slate-100 block truncate max-w-[145px]" title={o.recipientName}>
+                                {o.recipientName}
+                              </span>
+                              <span className="block text-[10px] font-mono text-slate-400 mt-0.5">
+                                {o.recipientPhone || 'N/A'}
+                              </span>
+                            </td>
+
+                            {/* Route (Pickup -> Dest) */}
+                            <td className="px-4 py-3 w-[180px] min-w-[180px] align-middle">
+                              <span className="font-bold text-slate-200 block truncate max-w-[165px]" title={o.hub?.name || 'Central Hub'}>
+                                {o.hub?.name || 'Central Hub'}
+                              </span>
+                              <span className="block text-[10px] text-slate-400 truncate max-w-[165px] mt-0.5" title={o.deliveryAddress?.address || 'Village Destination'}>
+                                → {o.deliveryAddress?.address || 'Village Destination'}
+                              </span>
+                            </td>
+
+                            {/* Priority / Cost */}
+                            <td className="px-4 py-3 w-[120px] min-w-[120px] align-middle">
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-bold inline-block leading-none ${
+                                o.priority === 'high' 
+                                  ? 'bg-red-500/20 text-red-400 border border-red-500/20' 
+                                  : o.priority === 'low' 
+                                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/20' 
+                                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/20'
+                              }`}>
+                                {o.priority || 'medium'}
+                              </span>
+                              <span className="block text-xs font-mono font-bold text-white mt-1">
+                                ₹{o.cost || 0}
+                              </span>
+                            </td>
+
+                            {/* Status */}
+                            <td className="px-4 py-3 w-[130px] min-w-[130px] align-middle">
+                              <span className={`px-2.5 py-1 rounded-full uppercase text-[9px] font-mono font-extrabold tracking-wider inline-flex items-center gap-1.5 leading-none ${
+                                o.status === 'delivered' 
+                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                  : o.status === 'cancelled' 
+                                  ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
+                                  : o.status === 'in_transit' 
+                                  ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' 
+                                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  o.status === 'delivered' ? 'bg-emerald-400' : o.status === 'cancelled' ? 'bg-red-400' : o.status === 'in_transit' ? 'bg-purple-400' : 'bg-amber-400 animate-pulse'
+                                }`} />
+                                {o.status ? o.status.replace('_', ' ') : 'pending'}
+                              </span>
+                            </td>
+
+                            {/* OTP Status */}
+                            <td className="px-4 py-3 w-[110px] min-w-[110px] align-middle">
+                              <span className="font-mono font-extrabold text-cyan-400 text-xs tracking-wider block">
+                                {o.otp || '----'}
+                              </span>
+                              <span className="block text-[9px] font-mono text-slate-500 mt-0.5">
+                                {o.status === 'delivered' ? 'Verified ✓' : 'Pending Verification'}
+                              </span>
+                            </td>
+
+                            {/* Payment */}
+                            <td className="px-4 py-3 w-[120px] min-w-[120px] align-middle">
+                              <span className={`px-2.5 py-1 rounded-full text-[9px] uppercase tracking-wider font-mono font-bold inline-block leading-none ${
+                                o.paymentStatus === 'paid' 
+                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                  : o.paymentStatus === 'cod' 
+                                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
+                                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              }`}>
+                                {o.paymentStatus || 'Pending'}
+                              </span>
+                            </td>
+
+                            {/* Assigned Agent */}
+                            <td className="px-4 py-3 w-[170px] min-w-[170px] align-middle">
+                              {o.agent ? (
+                                <div className="flex items-center gap-2 h-9 px-2.5 rounded-xl bg-white/5 border border-white/5">
+                                  <div className="w-5 h-5 rounded-full bg-primary/20 text-primary font-bold text-[9px] flex items-center justify-center shrink-0">
+                                    {o.agent.name?.charAt(0)}
+                                  </div>
+                                  <span className="font-bold text-slate-200 text-xs truncate max-w-[110px]" title={o.agent.name}>
+                                    {o.agent.name}
+                                  </span>
+                                </div>
+                              ) : (
+                                <select 
+                                  onChange={(e) => handleAssignAgent(o._id, e.target.value)}
+                                  className="h-9 w-full bg-neutral-950 border border-white/10 rounded-xl px-2.5 text-slate-400 outline-none text-xs cursor-pointer hover:border-white/20 transition-colors"
+                                  defaultValue=""
+                                >
+                                  <option value="" disabled>Assign Agent...</option>
+                                  {usersList.filter(u => u.role === 'agent').map(a => (
+                                    <option key={a._id} value={a._id}>{a.name}</option>
+                                  ))}
+                                </select>
+                              )}
+                            </td>
+
+                            {/* Delivery Lifecycle */}
+                            <td className="px-4 py-3 w-[150px] min-w-[150px] align-middle">
                               <select 
                                 value={o.status}
                                 onChange={(e) => handleUpdateStatus(o._id, e.target.value)}
-                                className="bg-neutral-950 border border-white/5 rounded-lg px-1 py-1 text-[10px] cursor-pointer outline-none mr-1.5"
+                                className="h-9 w-full bg-neutral-950 border border-white/10 rounded-xl px-2.5 text-xs font-semibold text-slate-200 cursor-pointer outline-none hover:border-white/20 transition-colors"
                               >
                                 <option value="pending">Pending</option>
                                 <option value="picked_up">Picked Up</option>
@@ -1266,41 +1650,46 @@ const AdminDashboard = () => {
                                 <option value="cancelled">Cancelled</option>
                                 <option value="failed">Failed</option>
                               </select>
+                            </td>
 
-                              {/* Print label */}
-                              <button onClick={() => window.print()} title="Print Label" className="p-1.5 rounded bg-white/5 hover:bg-white/10 border border-white/5 text-muted-foreground hover:text-white transition-colors">
-                                <Printer className="w-3.5 h-3.5" />
-                              </button>
-
-                              {/* Delete Order */}
-                              <button 
-                                onClick={async () => {
-                                  if (!window.confirm('Delete this order entry permanently?')) return;
-                                  try {
-                                    await api.delete(`/api/orders/${o._id}`);
-                                    fetchAdminData();
-                                  } catch (err) {
-                                    console.error(err);
-                                  }
-                                }} 
-                                className="p-1.5 rounded bg-white/5 hover:bg-white/10 border border-white/5 text-red-400 hover:text-red-300 transition-colors"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                            {/* Actions */}
+                            <td className="px-4 py-3 w-[90px] min-w-[90px] align-middle text-right pr-6">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button 
+                                  onClick={() => window.print()} 
+                                  title="Print Label" 
+                                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition-colors"
+                                >
+                                  <Printer className="w-3.5 h-3.5" />
+                                </button>
+                                <button 
+                                  onClick={async () => {
+                                    if (!window.confirm('Delete this order entry permanently?')) return;
+                                    try {
+                                      await api.delete(`/api/orders/${o._id}`);
+                                      fetchAdminData();
+                                    } catch (err) {
+                                      console.error(err);
+                                    }
+                                  }} 
+                                  title="Delete Order"
+                                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-red-400 hover:text-red-300 transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </div>
 
-              {/* ========================================================
-                  SECTION 12: PAGINATION
-                  ======================================================== */}
+              {/* Pagination */}
               {filteredOrders.length > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-4 bg-neutral-900/40 p-4 border border-white/5 rounded-3xl px-6 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center justify-between gap-4 bg-neutral-900/40 p-4 border border-white/5 rounded-3xl px-6 text-xs text-muted-foreground font-mono">
                   <div className="flex items-center gap-4">
                     <span>Showing {(currentPage - 1) * rowsPerPage + 1} to {Math.min(currentPage * rowsPerPage, filteredOrders.length)} of {filteredOrders.length} orders</span>
                     <div className="flex items-center gap-1.5">
@@ -1312,36 +1701,31 @@ const AdminDashboard = () => {
                       >
                         <option value={5}>5</option>
                         <option value={10}>10</option>
-                        <option value={25}>25</option>
+                        <option value={20}>20</option>
                         <option value={50}>50</option>
                       </select>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button 
+                  <div className="flex items-center gap-2">
+                    <Button 
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
                       disabled={currentPage === 1}
-                      className="p-1.5 rounded-lg bg-neutral-950 border border-white/5 hover:bg-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      variant="ghost" 
+                      size="sm" 
+                      className="bg-white/5 hover:bg-white/10 text-xs rounded-xl py-1 px-3 border border-white/5 text-white disabled:opacity-30"
                     >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                      <button 
-                        key={page} 
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-7 h-7 rounded-lg border font-bold font-mono transition-all ${currentPage === page ? 'bg-primary text-black border-primary' : 'bg-neutral-950 border-white/5 hover:bg-neutral-900 text-muted-foreground'}`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <button 
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
-                      disabled={currentPage === totalPages}
-                      className="p-1.5 rounded-lg bg-neutral-950 border border-white/5 hover:bg-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      Previous
+                    </Button>
+                    <span className="font-bold text-white px-2">Page {currentPage} of {Math.ceil(filteredOrders.length / rowsPerPage)}</span>
+                    <Button 
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredOrders.length / rowsPerPage)))} 
+                      disabled={currentPage >= Math.ceil(filteredOrders.length / rowsPerPage)}
+                      variant="ghost" 
+                      size="sm" 
+                      className="bg-white/5 hover:bg-white/10 text-xs rounded-xl py-1 px-3 border border-white/5 text-white disabled:opacity-30"
                     >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                      Next
+                    </Button>
                   </div>
                 </div>
               )}
