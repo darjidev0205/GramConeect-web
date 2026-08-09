@@ -13,7 +13,7 @@ export const AppShowcase = () => {
   ];
 
   return (
-    <section id="app" className="py-32 bg-[#050816] relative overflow-hidden border-t border-white/5">
+    <section id="app" className="py-10 sm:py-14 md:py-16 bg-[#050816] relative overflow-hidden border-t border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Header */}

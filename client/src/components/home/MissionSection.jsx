@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 export const MissionSection = () => {
   return (
-    <section id="mission" className="py-32 bg-[#050816] relative overflow-hidden border-t border-white/5">
+    <section id="mission" className="py-10 sm:py-14 md:py-16 bg-[#050816] relative overflow-hidden border-t border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">

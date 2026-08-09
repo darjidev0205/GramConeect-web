@@ -4,7 +4,7 @@ import { ArrowRight, Package, Truck, ShieldCheck } from 'lucide-react';
 
 export const CTASection = ({ onOpenAuth }) => {
   return (
-    <section className="py-32 bg-[#050816] relative overflow-hidden border-t border-white/5">
+    <section className="py-10 sm:py-14 md:py-16 bg-[#050816] relative overflow-hidden border-t border-white/5">
       
       {/* Massive Gradient Background Overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 via-indigo-900/30 to-purple-900/30 opacity-70 pointer-events-none" />

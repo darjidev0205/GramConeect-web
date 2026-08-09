@@ -14,7 +14,7 @@ export const InteractiveMap = () => {
   ];
 
   return (
-    <section className="py-32 bg-[#050816] relative overflow-hidden border-t border-white/5">
+    <section className="py-10 sm:py-14 md:py-16 bg-[#050816] relative overflow-hidden border-t border-white/5">
       {/* Background Glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-600/10 rounded-full blur-[160px] pointer-events-none" />
 

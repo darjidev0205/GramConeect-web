@@ -1,14 +1,37 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, MapPin, Navigation, ShieldCheck, Zap, Radio, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, MapPin, Zap, Radio, CheckCircle2 } from 'lucide-react';
 
 export const Hero = ({ onOpenAuth }) => {
   return (
-    <section className="relative min-h-[85vh] md:min-h-screen pt-24 md:pt-32 pb-12 md:pb-20 overflow-hidden bg-[#050816] flex items-center">
-      {/* Dynamic Background Glows & Grid */}
-      <div className="absolute inset-0 grid-pattern opacity-40 pointer-events-none" />
+    <section className="relative pt-20 pb-10 sm:pt-24 sm:pb-14 lg:pt-28 lg:pb-16 overflow-hidden bg-[#050816] flex items-center">
+      {/* Background SVG Rural Connectivity Topology & Grid */}
+      <div className="absolute inset-0 grid-pattern opacity-30 pointer-events-none" />
       
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[800px] h-[350px] sm:h-[500px] bg-gradient-to-tr from-blue-600/20 via-indigo-600/15 to-cyan-500/10 rounded-full blur-[100px] sm:blur-[140px] pointer-events-none" />
+      {/* Network Beam Background Canvas */}
+      <div className="absolute inset-0 pointer-events-none opacity-40">
+        <svg className="w-full h-full" viewBox="0 0 1440 800" fill="none">
+          <path d="M-100 200 Q 350 100 700 350 T 1500 200" stroke="url(#heroBeam1)" strokeWidth="2" strokeDasharray="6 6" className="animate-pulse" />
+          <path d="M-100 500 Q 450 650 900 400 T 1500 600" stroke="url(#heroBeam2)" strokeWidth="1.5" strokeDasharray="8 4" opacity="0.6" />
+          <circle cx="350" cy="180" r="4" fill="#22d1ee" />
+          <circle cx="700" cy="350" r="5" fill="#3b82f6" />
+          <circle cx="1100" cy="270" r="4" fill="#6366f1" />
+          <defs>
+            <linearGradient id="heroBeam1" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#22d1ee" />
+              <stop offset="50%" stopColor="#3b82f6" />
+              <stop offset="100%" stopColor="#6366f1" />
+            </linearGradient>
+            <linearGradient id="heroBeam2" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#38bdf8" />
+              <stop offset="100%" stopColor="#1d4ed8" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      
+      {/* Radial Atmospheric Glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[700px] h-[300px] sm:h-[450px] bg-gradient-to-tr from-blue-600/20 via-indigo-600/15 to-cyan-500/10 rounded-full blur-[100px] sm:blur-[140px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
@@ -20,8 +43,8 @@ export const Hero = ({ onOpenAuth }) => {
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md mb-4 sm:mb-8 hover:border-blue-500/30 transition-colors"
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md mb-4 sm:mb-6 hover:border-blue-500/30 transition-colors"
             >
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
               <span className="text-[11px] sm:text-xs font-medium text-slate-300">
@@ -30,12 +53,12 @@ export const Hero = ({ onOpenAuth }) => {
               <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400" />
             </motion.div>
 
-            {/* Headline: Responsive size 36px-42px on mobile */}
+            {/* Headline */}
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-              className="text-3.5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.12] mb-4 sm:mb-6 font-display"
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12] mb-4 sm:mb-5 font-display"
             >
               Delivering Every Village.{' '}
               <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-400 bg-clip-text text-transparent block mt-1">
@@ -47,8 +70,8 @@ export const Hero = ({ onOpenAuth }) => {
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="text-sm sm:text-xl text-slate-400 max-w-2xl font-normal leading-relaxed mb-6 sm:mb-10"
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-sm sm:text-lg text-slate-400 max-w-2xl font-normal leading-relaxed mb-6 sm:mb-8"
             >
               India’s first hyper-localized rural distribution network. We bridge tier-1 fulfillment centers to deep village clusters using smart offline tech.
             </motion.p>
@@ -57,12 +80,12 @@ export const Hero = ({ onOpenAuth }) => {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto mb-6 sm:mb-0"
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto"
             >
               <button
                 onClick={() => onOpenAuth('user')}
-                className="w-full sm:w-auto h-14 sm:h-auto px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 text-white font-semibold text-sm shadow-xl shadow-blue-600/30 hover:shadow-blue-500/50 transition-all flex items-center justify-center gap-2 group"
+                className="w-full sm:w-auto px-8 py-3.5 sm:py-4 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 text-white font-semibold text-sm shadow-xl shadow-blue-600/30 hover:shadow-blue-500/50 transition-all flex items-center justify-center gap-2 group cursor-pointer"
               >
                 Track Your Parcel
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -70,7 +93,7 @@ export const Hero = ({ onOpenAuth }) => {
 
               <button
                 onClick={() => onOpenAuth('agent')}
-                className="w-full sm:w-auto h-14 sm:h-auto px-8 py-4 rounded-full bg-white/[0.05] hover:bg-white/[0.08] text-white font-semibold text-sm border border-white/10 backdrop-blur-md transition-all flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-8 py-3.5 sm:py-4 rounded-full bg-white/[0.05] hover:bg-white/[0.08] text-white font-semibold text-sm border border-white/10 backdrop-blur-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 Become Partner
               </button>
@@ -83,8 +106,8 @@ export const Hero = ({ onOpenAuth }) => {
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative w-full max-w-md glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/15 bg-[#090d24]/80 backdrop-blur-2xl shadow-xl"
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="relative w-full max-w-md glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-white/15 bg-[#090d24]/80 backdrop-blur-2xl shadow-xl"
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
                 <div className="flex items-center gap-2">
@@ -98,7 +121,7 @@ export const Hero = ({ onOpenAuth }) => {
                 </div>
               </div>
 
-              <div className="relative h-44 sm:h-64 w-full rounded-xl overflow-hidden bg-[#040612] border border-white/10 p-3 sm:p-4 flex flex-col justify-between">
+              <div className="relative h-44 sm:h-56 w-full rounded-xl overflow-hidden bg-[#040612] border border-white/10 p-3 sm:p-4 flex flex-col justify-between">
                 <div className="absolute inset-0 dot-pattern opacity-60" />
                 
                 <svg className="absolute inset-0 w-full h-full pointer-events-none">

@@ -34,7 +34,7 @@ export const Testimonials = () => {
   ];
 
   return (
-    <section id="impact" className="py-12 md:py-32 bg-[#050816] relative overflow-hidden border-t border-white/5">
+    <section id="impact" className="py-10 sm:py-14 md:py-16 bg-[#050816] relative overflow-hidden border-t border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         <div className="flex flex-col items-center text-center mb-8 md:mb-16">

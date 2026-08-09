@@ -7,12 +7,12 @@ export const GramConnectLogo = ({
   className = '',
   onClick,
 }) => {
-  // Height map for predefined sizes
+  // Height map for predefined sizes (optimized for mobile & desktop)
   const sizeMap = {
-    sm: { mark: 'w-7 h-7', full: 'h-7', text: 'text-base', sub: 'text-[8px]' },
-    md: { mark: 'w-9 h-9', full: 'h-9', text: 'text-xl', sub: 'text-[9px]' },
-    lg: { mark: 'w-11 h-11', full: 'h-11', text: 'text-2xl', sub: 'text-[10px]' },
-    xl: { mark: 'w-16 h-16', full: 'h-16', text: 'text-4xl', sub: 'text-xs' },
+    sm: { mark: 'w-[24px] h-[24px]', full: 'h-6', text: 'text-sm sm:text-base', sub: 'text-[8px]' },
+    md: { mark: 'w-[26px] h-[26px] sm:w-8 sm:h-8', full: 'h-8', text: 'text-base sm:text-xl', sub: 'text-[9px]' },
+    lg: { mark: 'w-[32px] h-[32px] sm:w-10 sm:h-10', full: 'h-10', text: 'text-xl sm:text-2xl', sub: 'text-[10px]' },
+    xl: { mark: 'w-12 h-12 sm:w-16 sm:h-16', full: 'h-14', text: 'text-2xl sm:text-4xl', sub: 'text-xs' },
   };
 
   const currentSize = sizeMap[size] || sizeMap.md;
@@ -71,7 +71,7 @@ export const GramConnectLogo = ({
   return (
     <div 
       onClick={onClick}
-      className={`inline-flex items-center gap-3 select-none ${className} ${onClick ? 'cursor-pointer group' : ''}`}
+      className={`inline-flex items-center gap-2 sm:gap-3 select-none ${className} ${onClick ? 'cursor-pointer group' : ''}`}
     >
       {/* Icon Symbol */}
       <div className={`relative ${currentSize.mark} shrink-0`}>

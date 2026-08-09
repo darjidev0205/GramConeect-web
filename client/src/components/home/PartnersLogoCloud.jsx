@@ -12,7 +12,7 @@ export const PartnersLogoCloud = () => {
   ];
 
   return (
-    <section id="partners" className="py-20 bg-[#050816] relative overflow-hidden border-t border-white/5">
+    <section id="partners" className="py-8 sm:py-12 bg-[#050816] relative overflow-hidden border-t border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-10">
         <span className="text-xs uppercase font-mono font-bold tracking-widest text-slate-400">
           Trusted By Enterprise E-Commerce & National Networks
